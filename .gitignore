@@ -31,3 +31,13 @@ build/
 
 ### VS Code ###
 .vscode/
+.env
+mvnw
+mvnw.cmd
+.cursorrules
+.github
+
+### Log
+logs/
+.secrets
+data/
