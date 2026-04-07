@@ -21,7 +21,8 @@ public class User extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    String id; // Sử dụng UUID cho bảo mật và scale hệ thống
+    @Column(columnDefinition = "UUID") // Chỉ định rõ kiểu dữ liệu cho Postgres
+    String id;
 
     @Column(unique = true, nullable = false)
     String username;
