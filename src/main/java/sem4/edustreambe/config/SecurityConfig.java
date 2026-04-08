@@ -4,6 +4,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer; // Fix lỗi withDefaults
@@ -26,14 +27,15 @@ import org.springframework.security.web.SecurityFilterChain;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class SecurityConfig {
 
-    CustomJwtDecoder customJwtDecoder;
+    @Autowired
+    private CustomJwtDecoder customJwtDecoder;
 
     String[] PUBLIC_ENDPOINTS = {
             "/auth/**",
             "/api/auth/**",
             "/api/public/**",
             "/v3/api-docs/**",
-            "/swagger-ui/**"
+            "/swagger-ui/**",
     };
 
     @Bean

@@ -4,12 +4,16 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.mapstruct.Mapper;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import sem4.edustreambe.dto.user.request.UserCreationRequest;
+import sem4.edustreambe.dto.user.response.UserResponse;
 import sem4.edustreambe.entity.User;
 import sem4.edustreambe.exception.AppException;
 import sem4.edustreambe.exception.ErrorCode;
+import sem4.edustreambe.mapper.UserMapper;
 import sem4.edustreambe.repository.RoleRepository;
 import sem4.edustreambe.repository.UserRepository;
 
@@ -24,6 +28,7 @@ public class UserService {
     UserRepository userRepository;
     RoleRepository roleRepository;
     PasswordEncoder passwordEncoder;
+    UserMapper userMapper;
 
     public User createUser(UserCreationRequest request) {
         log.info("Creating new user: {}", request.getUsername());
@@ -46,5 +51,15 @@ public class UserService {
         user.setRoles(roles);
 
         return userRepository.save(user);
+    }
+
+    public UserResponse getMyInfo() {
+        var context = SecurityContextHolder.getContext();
+        String name = context.getAuthentication().getName();
+
+        User user = userRepository.findByUsername(name)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        return userMapper.toUserResponse(user);
     }
 }
