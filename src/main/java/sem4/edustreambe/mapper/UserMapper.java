@@ -2,16 +2,33 @@ package sem4.edustreambe.mapper;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
 import sem4.edustreambe.dto.user.request.UserCreationRequest;
+import sem4.edustreambe.dto.user.request.UserUpdateRequest;
 import sem4.edustreambe.dto.user.response.UserResponse;
+import sem4.edustreambe.entity.Role;
 import sem4.edustreambe.entity.User;
 
-@Mapper(componentModel = "spring") // Để Inject vào Service bằng @RequiredArgsConstructor
+import java.util.Set;
+import java.util.stream.Collectors;
+
+@Mapper(componentModel = "spring")
 public interface UserMapper {
 
-    // Map từ Request lúc Register sang Entity
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "password", ignore = true)
+    @Mapping(target = "roles", ignore = true)
+
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "modifiedAt", ignore = true)
     User toUser(UserCreationRequest request);
 
-    // Map từ Entity sang Response (Tự động bỏ qua password vì DTO không có)
+
     UserResponse toUserResponse(User user);
+
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "username", ignore = true)
+    @Mapping(target = "password", ignore = true)
+    @Mapping(target = "roles", ignore = true)
+    void updateUser(@MappingTarget User user, UserUpdateRequest request);
 }
