@@ -29,6 +29,7 @@ public class SecurityConfig {
     CustomJwtDecoder customJwtDecoder;
 
     String[] PUBLIC_ENDPOINTS = {
+            "/auth/**",
             "/api/auth/**",
             "/api/public/**",
             "/v3/api-docs/**",

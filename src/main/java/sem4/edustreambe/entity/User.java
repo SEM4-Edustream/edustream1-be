@@ -8,6 +8,7 @@ import sem4.edustreambe.constant.UserStatus;
 
 import java.time.LocalDate;
 import java.util.Set;
+import java.util.UUID;
 
 @Entity
 @Table(name = "users") // Tránh dùng 'user' vì là từ khóa trong một số DB
@@ -21,8 +22,8 @@ public class User extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(columnDefinition = "UUID") // Chỉ định rõ kiểu dữ liệu cho Postgres
-    String id;
+    @Column(name = "id", updatable = false, nullable = false, columnDefinition = "UUID")
+    UUID id;
 
     @Column(unique = true, nullable = false)
     String username;

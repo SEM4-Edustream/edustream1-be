@@ -11,7 +11,10 @@ import org.springframework.web.bind.annotation.RestController;
 import sem4.edustreambe.dto.auth.request.AuthenticationRequest;
 import sem4.edustreambe.dto.auth.response.AuthenticationResponse;
 import sem4.edustreambe.dto.common.ApiResponse;
+import sem4.edustreambe.dto.user.request.UserCreationRequest;
+import sem4.edustreambe.entity.User;
 import sem4.edustreambe.service.AuthenticationService;
+import sem4.edustreambe.service.UserService;
 
 @RestController
 @RequestMapping("/auth")
@@ -21,6 +24,7 @@ import sem4.edustreambe.service.AuthenticationService;
 public class AuthenticationController {
 
     AuthenticationService authenticationService;
+    UserService userService;
 
     @PostMapping("/login")
     public ApiResponse<AuthenticationResponse> authenticate(@RequestBody AuthenticationRequest request) {
@@ -29,6 +33,16 @@ public class AuthenticationController {
         var result = authenticationService.authenticate(request);
 
         return ApiResponse.<AuthenticationResponse>builder()
+                .result(result)
+                .build();
+    }
+
+    @PostMapping("/register")
+    public ApiResponse<User> createUser(@RequestBody UserCreationRequest request) {
+        log.info("Received registration request: {}", request.getUsername());
+        var result = userService.createUser(request);
+
+        return ApiResponse.<User>builder()
                 .result(result)
                 .build();
     }
