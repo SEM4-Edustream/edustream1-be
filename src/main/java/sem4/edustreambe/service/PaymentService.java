@@ -50,7 +50,7 @@ public class PaymentService {
 
     @Transactional
     public PaymentLinkResponse createPaymentLink(String bookingId) {
-        User studengt = getCurrentUser();
+        User student = getCurrentUser();
 
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new AppException(ErrorCode.BOOKING_NOT_FOUND));
