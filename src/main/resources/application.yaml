@@ -1,5 +1,6 @@
 server:
   port: 8080
+  forward-headers-strategy: framework
   tomcat:
     max-connections: 8192
     connection-timeout: 20000
