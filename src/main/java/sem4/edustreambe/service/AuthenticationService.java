@@ -200,7 +200,7 @@ public class AuthenticationService {
     private String buildScope(User user) {
         StringJoiner stringJoiner = new StringJoiner(" ");
         if (user.getRole() != null) {
-            stringJoiner.add("ROLE_" + user.getRole().getName());
+            stringJoiner.add(user.getRole().getName());
         }
         return stringJoiner.toString();
     }

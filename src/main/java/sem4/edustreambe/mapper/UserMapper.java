@@ -13,9 +13,9 @@ public interface UserMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "password", ignore = true) // Sẽ encode thủ công trong Service
-    @Mapping(target = "role", ignore = true)     // Sẽ gán thủ công trong Service
-    @Mapping(target = "status", ignore = true)   // Default ACTIVE được set bởi @Builder.Default
-    @Mapping(target = "dob", ignore = true)      // Không có trong request đăng ký
+    @Mapping(target = "role", ignore = true) // Sẽ gán thủ công trong Service
+    @Mapping(target = "status", ignore = true) // Default ACTIVE được set bởi @Builder.Default
+    @Mapping(target = "dob", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "createdBy", ignore = true)
     @Mapping(target = "modifiedAt", ignore = true)
@@ -24,11 +24,11 @@ public interface UserMapper {
     User toUser(UserCreationRequest request);
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "username", ignore = true) // Không cho sửa username
+    @Mapping(target = "username", ignore = true)
     @Mapping(target = "password", ignore = true)
     @Mapping(target = "role", ignore = true)
     @Mapping(target = "status", ignore = true)
-    @Mapping(target = "email", ignore = true)    // Email không được sửa qua flow này
+    @Mapping(target = "email", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "createdBy", ignore = true)
     @Mapping(target = "modifiedAt", ignore = true)

@@ -25,6 +25,13 @@ public enum ErrorCode {
     EMAIL_EXISTED(2002, "Email already exists", HttpStatus.BAD_REQUEST),
     USER_NOT_EXISTED(2003, "User not found", HttpStatus.NOT_FOUND),
 
+    // TUTOR PROFILE (30xx)
+    TUTOR_PROFILE_EXISTED(3001, "Tutor profile already exists for this user", HttpStatus.BAD_REQUEST),
+    TUTOR_PROFILE_NOT_FOUND(3002, "Tutor profile not found", HttpStatus.NOT_FOUND),
+    INVALID_PROFILE_STATUS(3003, "Action not allowed for current profile status", HttpStatus.BAD_REQUEST),
+    TUTOR_DOCUMENT_NOT_FOUND(3004, "Tutor document not found", HttpStatus.NOT_FOUND),
+    PROFILE_MUST_HAVE_DOCUMENT(3005, "Profile must have at least one document before submitting", HttpStatus.BAD_REQUEST),
+
     // VALIDATION (80xx)
     INVALID_PASSWORD(8001, "Password must be at least 8 characters", HttpStatus.BAD_REQUEST),
     USERNAME_INVALID(8002, "Username must be at least 3 characters", HttpStatus.BAD_REQUEST),

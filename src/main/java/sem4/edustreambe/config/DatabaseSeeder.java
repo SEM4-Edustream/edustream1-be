@@ -25,7 +25,7 @@ public class DatabaseSeeder implements ApplicationRunner {
         
         seedRoleIfNotExists(PredefinedRole.ADMIN_ROLE, "Administrator role");
         seedRoleIfNotExists(PredefinedRole.STUDENT_ROLE, "Student role");
-        seedRoleIfNotExists(PredefinedRole.INSTRUCTOR_ROLE, "Instructor role");
+        seedRoleIfNotExists(PredefinedRole.TUTOR_ROLE, "Tutor role");
         
         log.info("Database seeding completed.");
     }

@@ -25,7 +25,7 @@ public class Role {
     @Column(name = "description")
     String description;
 
-    // Constructor nhanh để dùng trong khởi tạo dữ liệu (Data Seeding)
+   
     public Role(String name) {
         this.name = name;
     }

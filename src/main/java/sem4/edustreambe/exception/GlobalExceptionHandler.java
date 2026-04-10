@@ -17,7 +17,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(ErrorCode.UNCATEGORIZED_EXCEPTION.getStatusCode())
                 .body(ApiResponse.builder()
                         .code(ErrorCode.UNCATEGORIZED_EXCEPTION.getCode())
-                        .message(ErrorCode.UNCATEGORIZED_EXCEPTION.getMessage())
+                        .message(ErrorCode.UNCATEGORIZED_EXCEPTION.getMessage() + " | CHI TIẾT LỖI: " + exception.getMessage())
                         .build());
     }
 

@@ -45,4 +45,7 @@ public class User extends BaseEntity {
     @JoinColumn(name = "role_id", nullable = false)
     Role role;
 
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    TutorProfile tutorProfile;
+
 }
