@@ -1,0 +1,15 @@
+.git
+.github
+.idea
+.vscode
+.env
+.env.production
+target
+*.iml
+*.iws
+*.ipr
+docs
+logs
+data
+certbot
+nginx

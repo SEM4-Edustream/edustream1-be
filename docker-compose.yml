@@ -1,0 +1,39 @@
+services:
+  app:
+    build: .
+    container_name: edustream-be
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env.production
+    networks:
+      - edustream-net
+
+  nginx:
+    image: nginx:alpine
+    container_name: edustream-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./certbot/conf:/etc/letsencrypt:ro
+      - ./certbot/www:/var/www/certbot:ro
+    depends_on:
+      - app
+    networks:
+      - edustream-net
+
+  certbot:
+    image: certbot/certbot
+    container_name: edustream-certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+
+networks:
+  edustream-net:
+    driver: bridge
