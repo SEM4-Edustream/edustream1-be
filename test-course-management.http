@@ -1,0 +1,171 @@
+### TẠO MỚI MỘT STUDENT VÀ LOGIN (ĐỂ TEST)
+# 1. Khởi tạo Học viên
+POST http://localhost:8080/api/users
+Content-Type: application/json
+
+{
+  "username": "gia_su_vip2",
+  "password": "password123",
+  "email": "vip2@example.com",
+  "firstName": "Gia Sư",
+  "lastName": "Vip 2"
+}
+
+###
+# 2. Login Học viên -> Lưu token
+# @name loginTutor2
+POST http://localhost:8080/auth/login
+Content-Type: application/json
+
+{
+  "username": "gia_su_vip2",
+  "password": "password123"
+}
+
+### Bắt token tự động từ response
+@tutorToken = {{loginTutor2.response.body.result.token}}
+
+
+### QUY TRÌNH DUYỆT TÀI KHOẢN GIA SƯ (TUTOR PROFILE FLOW)
+# Giả lập Học viên đó xin làm Gia sư (Tạo profile DRAFT)
+# @name createTutorProfile2
+POST http://localhost:8080/api/tutor-profiles
+Authorization: Bearer {{tutorToken}}
+Content-Type: application/json
+
+{
+  "headline": "Chuyên gia lập trình",
+  "bio": "Khóa học chất lượng",
+  "videoIntroduction": "link_video"
+}
+
+### Bắt ID Profile
+@tutorProfileId = {{createTutorProfile2.response.body.result.id}}
+
+###
+# Gắn giấy tờ
+POST http://localhost:8080/api/tutor-profiles/documents
+Authorization: Bearer {{tutorToken}}
+Content-Type: application/json
+
+{
+  "type": "DEGREE",
+  "fileUrl": "link_bang_cap"
+}
+
+###
+# Submit hồ sơ xin làm Gia sư
+POST http://localhost:8080/api/tutor-profiles/submit-verification
+Authorization: Bearer {{tutorToken}}
+
+
+### MỞ TAB ADMIN ĐỂ DUYỆT LÊN TUTOR
+# Login Admin
+# @name loginAdmin
+POST http://localhost:8080/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "adminpassword"
+}
+###
+@adminToken = {{loginAdmin.response.body.result.token}}
+
+# Duyệt hồ sơ thành TUTOR
+POST http://localhost:8080/api/admin/tutor-profiles/{{tutorProfileId}}/verify
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "action": "APPROVED",
+  "reviewComment": "Duyệt."
+}
+
+
+### SAU KHI LÊN ROLE TUTOR -> TEST QUY TRÌNH TẠO KHÓA HỌC MỚI (COURSE MANAGEMENT FLOW)
+
+# Refresh Login lại để User nhận Role mới trong JWT
+# @name loginTutor2_Refreshed
+POST http://localhost:8080/auth/login
+Content-Type: application/json
+
+{
+  "username": "gia_su_vip2",
+  "password": "password123"
+}
+###
+@tutorTokenNew = {{loginTutor2_Refreshed.response.body.result.token}}
+
+
+###
+# 1. Tạo Khóa học (Course)
+# @name createCourse
+POST http://localhost:8080/api/tutor-courses
+Authorization: Bearer {{tutorTokenNew}}
+Content-Type: application/json
+
+{
+  "title": "Java Spring Boot Full Course",
+  "description": "Học từ Zero đến Hero",
+  "price": 500000.0,
+  "thumbnailUrl": "dummy.jpg"
+}
+
+### Lấy ID khóa học
+@courseId = {{createCourse.response.body.result.id}}
+
+###
+# 2. Tạo Module (Chương) vào Khóa học
+# @name createModule
+POST http://localhost:8080/api/tutor-courses/{{courseId}}/modules
+Authorization: Bearer {{tutorTokenNew}}
+Content-Type: application/json
+
+{
+  "title": "Chương 1: Giới thiệu",
+  "description": "Các khái niệm nền tảng",
+  "orderIndex": 1
+}
+
+### Lấy ID Module
+@moduleId = {{createModule.response.body.result.id}}
+
+###
+# 3. Tạo Lesson (Bài học) vào Module
+POST http://localhost:8080/api/tutor-courses/modules/{{moduleId}}/lessons
+Authorization: Bearer {{tutorTokenNew}}
+Content-Type: application/json
+
+{
+  "title": "Cài đặt JDK",
+  "type": "VIDEO",
+  "videoUrl": "s3_url",
+  "durationSeconds": 600,
+  "orderIndex": 1
+}
+
+###
+# 4. Kiểm tra danh sách Course của tôi
+GET http://localhost:8080/api/tutor-courses
+Authorization: Bearer {{tutorTokenNew}}
+
+###
+# 5. Xem chi tiết cây (Course -> Module -> Lesson)
+GET http://localhost:8080/api/tutor-courses/{{courseId}}
+Authorization: Bearer {{tutorTokenNew}}
+
+###
+# 6. Gửi Nộp duyệt Khóa học (Submit)
+POST http://localhost:8080/api/tutor-courses/{{courseId}}/submit
+Authorization: Bearer {{tutorTokenNew}}
+
+### QUAY LẠI ADMIN: DUYỆT KHÓA HỌC LÊN PUBLISHED
+# 7. Lấy danh sách Khóa học đang xin duyệt (PENDING)
+GET http://localhost:8080/api/admin/courses/pending
+Authorization: Bearer {{adminToken}}
+
+### 
+# 8. Phê duyệt (Publish) Khóa học
+POST http://localhost:8080/api/admin/courses/{{courseId}}/verify?isApprove=true
+Authorization: Bearer {{adminToken}}

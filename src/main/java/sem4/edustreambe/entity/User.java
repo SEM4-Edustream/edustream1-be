@@ -11,7 +11,7 @@ import java.util.Set;
 import java.util.UUID;
 
 @Entity
-@Table(name = "users") // Tránh dùng 'user' vì là từ khóa trong một số DB
+@Table(name = "users") 
 @Getter
 @Setter
 @NoArgsConstructor

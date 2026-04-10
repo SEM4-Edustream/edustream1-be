@@ -32,6 +32,14 @@ public enum ErrorCode {
     TUTOR_DOCUMENT_NOT_FOUND(3004, "Tutor document not found", HttpStatus.NOT_FOUND),
     PROFILE_MUST_HAVE_DOCUMENT(3005, "Profile must have at least one document before submitting", HttpStatus.BAD_REQUEST),
 
+    // COURSE (40xx)
+    COURSE_NOT_FOUND(4001, "Course not found", HttpStatus.NOT_FOUND),
+    MODULE_NOT_FOUND(4002, "Module not found", HttpStatus.NOT_FOUND),
+    LESSON_NOT_FOUND(4003, "Lesson not found", HttpStatus.NOT_FOUND),
+    INVALID_COURSE_STATUS(4004, "Action not allowed for current course status", HttpStatus.BAD_REQUEST),
+    COURSE_OWNERSHIP_DENIED(4005, "You do not own this course", HttpStatus.FORBIDDEN),
+
+
     // VALIDATION (80xx)
     INVALID_PASSWORD(8001, "Password must be at least 8 characters", HttpStatus.BAD_REQUEST),
     USERNAME_INVALID(8002, "Username must be at least 3 characters", HttpStatus.BAD_REQUEST),

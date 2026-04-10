@@ -44,25 +44,14 @@ public class TutorProfileService {
     RoleRepository roleRepository;
     TutorMapper tutorMapper;
 
-    // =========================================================
-    // HELPER: Lấy User hiện tại từ JWT Security Context
-    // =========================================================
+
     private User getCurrentUser() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
     }
 
-    // =========================================================
-    // API DÀNH CHO TUTOR / STUDENT
-    // =========================================================
 
-    /**
-     * [POST /api/tutor-profiles]
-     * Tạo hồ sơ Tutor mới.
-     * - Nghiệp vụ: Mỗi User chỉ được có 1 hồ sơ Tutor duy nhất.
-     * - Trạng thái khởi tạo: DRAFT.
-     */
     public TutorProfileResponse createProfile(TutorProfileCreationRequest request) {
         User currentUser = getCurrentUser();
         log.info("User [{}] is creating a tutor profile", currentUser.getUsername());
@@ -82,10 +71,7 @@ public class TutorProfileService {
         return tutorMapper.toTutorProfileResponse(saved);
     }
 
-    /**
-     * [GET /api/tutor-profiles/my-profile]
-     * Lấy hồ sơ Tutor của người dùng hiện tại theo JWT context.
-     */
+
     public TutorProfileResponse getMyProfile() {
         User currentUser = getCurrentUser();
 
@@ -95,12 +81,7 @@ public class TutorProfileService {
         return tutorMapper.toTutorProfileResponse(profile);
     }
 
-    /**
-     * [PUT /api/tutor-profiles/me]
-     * Cập nhật thông tin text của hồ sơ Tutor.
-     * - Nghiệp vụ: Chỉ được cập nhật khi profile đang ở trạng thái DRAFT hoặc REJECTED.
-     *   PENDING/APPROVED/BANNED không được sửa.
-     */
+
     public TutorProfileResponse updateMyProfile(TutorProfileUpdateRequest request) {
         User currentUser = getCurrentUser();
 
@@ -120,11 +101,7 @@ public class TutorProfileService {
         return tutorMapper.toTutorProfileResponse(saved);
     }
 
-    /**
-     * [POST /api/tutor-profiles/documents]
-     * Thêm tài liệu chứng minh năng lực (URL S3 do Frontend upload sẵn).
-     * - Nghiệp vụ: Chỉ được thêm document khi profile đang ở DRAFT hoặc REJECTED.
-     */
+
     public TutorDocumentResponse addDocument(TutorDocumentRequest request) {
         User currentUser = getCurrentUser();
 
@@ -150,14 +127,7 @@ public class TutorProfileService {
         return tutorMapper.toTutorDocumentResponse(saved);
     }
 
-    /**
-     * [POST /api/tutor-profiles/submit-verification]
-     * Tutor xác nhận đã chuẩn bị đủ giấy tờ và nộp hồ sơ để Admin duyệt.
-     * - Nghiệp vụ:
-     *   1. Chỉ được submit từ trạng thái DRAFT hoặc REJECTED.
-     *   2. Phải có ít nhất 1 tài liệu đã được đính kèm.
-     *   3. Sau khi submit, trạng thái chuyển sang PENDING.
-     */
+   
     public TutorProfileResponse submitForVerification() {
         try {
             User currentUser = getCurrentUser();
@@ -189,15 +159,7 @@ public class TutorProfileService {
         }
     }
 
-    // =========================================================
-    // API DÀNH CHO ADMIN
-    // =========================================================
-
-    /**
-     * [GET /api/admin/tutor-profiles?status=PENDING]
-     * Lấy danh sách hồ sơ Tutor theo filter status.
-     * Mặc định trả về danh sách PENDING nếu không truyền status.
-     */
+   
     public List<TutorProfileResponse> getProfilesByStatus(VerificationStatus status) {
         VerificationStatus filterStatus = (status != null) ? status : VerificationStatus.PENDING;
         log.info("Admin fetching profiles with status [{}]", filterStatus);
@@ -207,10 +169,7 @@ public class TutorProfileService {
                 .toList();
     }
 
-    /**
-     * [GET /api/admin/tutor-profiles/{id}]
-     * Admin xem chi tiết hồ sơ Tutor (full info + documents + lịch sử duyệt).
-     */
+
     public TutorProfileResponse getProfileById(String profileId) {
         TutorProfile profile = tutorProfileRepository.findById(profileId)
                 .orElseThrow(() -> new AppException(ErrorCode.TUTOR_PROFILE_NOT_FOUND));
@@ -218,21 +177,9 @@ public class TutorProfileService {
         return tutorMapper.toTutorProfileResponse(profile);
     }
 
-    /**
-     * [POST /api/admin/tutor-profiles/{id}/verify]
-     * Admin duyệt hoặc từ chối hồ sơ Tutor.
-     * - Nghiệp vụ APPROVE:
-     *   1. Chỉ được APPROVE hồ sơ đang ở trạng thái PENDING.
-     *   2. Đổi trạng thái profile sang APPROVED.
-     *   3. Tự động đổi Role của User sang TUTOR.
-     *   4. Ghi lại lịch sử vào bảng verification_processes.
-     * - Nghiệp vụ REJECT:
-     *   1. Chỉ được REJECT hồ sơ đang ở trạng thái PENDING.
-     *   2. Đổi trạng thái profile sang REJECTED (Tutor có thể nộp lại).
-     *   3. Ghi lại lịch sử kèm lý do từ chối (reviewComment).
-     */
+   
     public TutorProfileResponse reviewProfile(String profileId, VerificationReviewRequest request) {
-        // Chỉ chấp nhận action APPROVED hoặc REJECTED
+        // action APPROVED hoặc REJECTED
         if (request.getAction() != VerificationStatus.APPROVED
                 && request.getAction() != VerificationStatus.REJECTED) {
             throw new AppException(ErrorCode.INVALID_PROFILE_STATUS);
@@ -241,21 +188,21 @@ public class TutorProfileService {
         TutorProfile profile = tutorProfileRepository.findById(profileId)
                 .orElseThrow(() -> new AppException(ErrorCode.TUTOR_PROFILE_NOT_FOUND));
 
-        // Chỉ được duyệt hồ sơ đang PENDING
+        // profile PENDING
         if (profile.getStatus() != VerificationStatus.PENDING) {
             log.warn("Admin tried to review profile [{}] with status [{}] (must be PENDING)",
                     profileId, profile.getStatus());
             throw new AppException(ErrorCode.INVALID_PROFILE_STATUS);
         }
 
-        // Lấy thông tin Admin đang thao tác từ Security Context
+        
         String adminUsername = SecurityContextHolder.getContext().getAuthentication().getName();
         User adminUser = userRepository.findByUsername(adminUsername)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         VerificationStatus previousStatus = profile.getStatus();
 
-        // Ghi lịch sử duyệt hồ sơ
+        
         VerificationProcess verificationProcess = VerificationProcess.builder()
                 .tutorProfile(profile)
                 .adminId(adminUser.getId().toString())

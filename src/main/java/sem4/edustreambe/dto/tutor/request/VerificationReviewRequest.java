@@ -5,11 +5,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 import sem4.edustreambe.enums.VerificationStatus;
 
-/**
- * Request DTO dành cho Admin khi duyệt hồ sơ Tutor.
- * action: chỉ chấp nhận APPROVED hoặc REJECTED.
- * reviewComment: bắt buộc khi REJECT để thông báo lý do cho Tutor.
- */
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
