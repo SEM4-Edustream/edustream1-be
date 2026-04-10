@@ -18,7 +18,7 @@ public class WebhookController {
     PaymentService paymentService;
 
     @PostMapping
-    public String handlePayOSWebhook(@RequestBody Object body) {
+    public com.fasterxml.jackson.databind.node.ObjectNode handlePayOSWebhook(@RequestBody com.fasterxml.jackson.databind.node.ObjectNode body) {
         return paymentService.handlePayOSWebhook(body);
     }
 }

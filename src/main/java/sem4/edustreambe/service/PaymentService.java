@@ -50,7 +50,7 @@ public class PaymentService {
 
     @Transactional
     public PaymentLinkResponse createPaymentLink(String bookingId) {
-        User student = getCurrentUser();
+        User studengt = getCurrentUser();
 
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new AppException(ErrorCode.BOOKING_NOT_FOUND));
@@ -119,23 +119,49 @@ public class PaymentService {
 
     @Transactional
     @SuppressWarnings("unchecked")
-    public String handlePayOSWebhook(Object body) {
+    public com.fasterxml.jackson.databind.node.ObjectNode handlePayOSWebhook(com.fasterxml.jackson.databind.node.ObjectNode body) {
+        com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+        com.fasterxml.jackson.databind.node.ObjectNode response = mapper.createObjectNode();
+        
         try {
             // Verify webhook data and extract payment info using SDK v2
             vn.payos.model.webhooks.WebhookData data = payOS.webhooks().verify(body);
 
             if (!"00".equals(data.getCode())) {
                 log.warn("Webhook received code {}, ignoring.", data.getCode());
-                return "OK";
+                response.put("error", 0);
+                response.put("message", "Ok");
+                response.set("data", null);
+                return response;
             }
 
             Long orderCode = data.getOrderCode();
+            
+            // Check if mock order code from PayOS test webhook dashboard
+            if (String.valueOf(orderCode).equals("123") || "test webhook".equalsIgnoreCase(data.getDescription())) {
+                log.info("Received mock webhook from PayOS. Returning 200 OK.");
+                response.put("error", 0);
+                response.put("message", "Ok");
+                response.set("data", null);
+                return response;
+            }
 
-            PaymentTransaction tx = transactionRepository.findByOrderCode(orderCode)
-                    .orElseThrow(() -> new AppException(ErrorCode.TRANSACTION_NOT_FOUND));
+            Optional<PaymentTransaction> txOpt = transactionRepository.findByOrderCode(orderCode);
+            if (txOpt.isEmpty()) {
+                log.warn("Webhook received for unknown orderCode {}. Ignored.", orderCode);
+                response.put("error", 0);
+                response.put("message", "Ok");
+                response.set("data", null);
+                return response;
+            }
+            
+            PaymentTransaction tx = txOpt.get();
 
             if (tx.getStatus() == TransactionStatus.PAID) {
-                return "OK";
+                response.put("error", 0);
+                response.put("message", "Ok");
+                response.set("data", null);
+                return response;
             }
 
             // Update Transaction
@@ -161,10 +187,17 @@ public class PaymentService {
                         booking.getUser().getUsername(), booking.getCourse().getTitle());
             }
 
-            return "OK";
+            response.put("error", 0);
+            response.put("message", "Ok");
+            response.set("data", null);
+            return response;
         } catch (Exception e) {
             log.error("PayOS Webhook handling failed: {}", e.getMessage());
-            throw new AppException(ErrorCode.INVALID_WEBHOOK_DATA);
+            // PayOS requires 200 OK but we can return error in json wrapper
+            response.put("error", -1);
+            response.put("message", "Webhook verified failed or error: " + e.getMessage());
+            response.set("data", null);
+            return response;
         }
     }
 }
