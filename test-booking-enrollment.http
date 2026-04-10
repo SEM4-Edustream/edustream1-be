@@ -1,0 +1,95 @@
+### =========================================================================
+### KỊCH BẢN TEST CHỨC NĂNG BOOKING & ENROLLMENT
+### Lưu ý: Bạn cần chạy file `test-course-management.http` trước tiên 
+### để tạo ra ít nhất 1 khóa học thì mới có ID Khóa học để test ở đây.
+### =========================================================================
+
+
+### 1. TẠO HỌC VIÊN MỚI ĐỂ VÀO MUA KHÓA HỌC
+POST http://localhost:8080/api/users
+Content-Type: application/json
+
+{
+  "username": "hoc_vien_test",
+  "password": "password123",
+  "email": "student_test@example.com",
+  "firstName": "Học",
+  "lastName": "Viên"
+}
+
+### 
+# 2. ĐĂNG NHẬP HỌC VIÊN VÀ LẤY TOKEN
+# @name loginStudent
+POST http://localhost:8080/auth/login
+Content-Type: application/json
+
+{
+  "username": "hoc_vien_test",
+  "password": "password123"
+}
+
+### Lưu biến token tự động
+@studentToken = {{loginStudent.response.body.result.token}}
+
+
+### =========================================================================
+### MỤC A: TEST ĐĂNG KÝ KHÓA HỌC MIỄN PHÍ (PRICE = 0 / NULL)
+### =========================================================================
+
+# Đổi giá trị này thành ID Khóa học "Miễn Phí" đã được duyệt PUBLISHED
+@freeCourseId = def5c45c-021d-4b63-8e0c-c0a4ad1c2909
+
+### 
+# 3. Tạo Booking cho khóa miễn phí
+# KỲ VỌNG: Booking sinh ra lập tức nhảy sang `PAID` do được Auto-Enroll.
+# @name bookFreeCourse
+POST http://localhost:8080/api/student/bookings
+Authorization: Bearer {{studentToken}}
+Content-Type: application/json
+
+{
+  "courseId": "{{freeCourseId}}"
+}
+
+### 
+# 4. Kiểm tra danh sách Enrollment (Khóa Học Của Tôi)
+# KỲ VỌNG: Trả về Khóa học miễn phí bên trên vì đã mua thành công.
+GET http://localhost:8080/api/student/enrollments/my-courses
+Authorization: Bearer {{studentToken}}
+
+
+### =========================================================================
+### MỤC B: TEST ĐĂNG KÝ KHÓA HỌC TRẢ PHÍ (PRICE > 0)
+### =========================================================================
+
+# Đổi giá trị này thành ID Khóa học "Trả Phí" đã được duyệt PUBLISHED
+@paidCourseId = ad8e65f6-ce9c-4ebf-ae06-2f1b2207c98a
+
+### 
+# 5. Tạo Booking cho khóa trả phí lần 1
+# KỲ VỌNG: Booking sinh ra nằm ở trạng thái `PENDING`. Máy chủ chờ thanh toán.
+# @name bookPaidCourse
+POST http://localhost:8080/api/student/bookings
+Authorization: Bearer {{studentToken}}
+Content-Type: application/json
+
+{
+  "courseId": "{{paidCourseId}}"
+}
+
+### 
+# 6. Bấm Đăng Ký lại Khóa Học đó lần 2 (Spam)
+# KỲ VỌNG: HTTP 400 Bad Request, báo lỗi `BOOKING_ALREADY_EXISTS`.
+POST http://localhost:8080/api/student/bookings
+Authorization: Bearer {{studentToken}}
+Content-Type: application/json
+
+{
+  "courseId": "{{paidCourseId}}"
+}
+
+### 
+# 7. Kiểm tra Lịch sử Giỏ Hàng (Lịch sử Booking)
+# KỲ VỌNG: Hiển thị 2 hóa đơn (1 cái PAID của khóa free, 1 cái PENDING của khóa có phí).
+GET http://localhost:8080/api/student/bookings/my-bookings
+Authorization: Bearer {{studentToken}}

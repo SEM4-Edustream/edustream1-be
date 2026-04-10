@@ -39,6 +39,17 @@ public enum ErrorCode {
     INVALID_COURSE_STATUS(4004, "Action not allowed for current course status", HttpStatus.BAD_REQUEST),
     COURSE_OWNERSHIP_DENIED(4005, "You do not own this course", HttpStatus.FORBIDDEN),
 
+    // BOOKING & ENROLLMENT (50xx)
+    BOOKING_NOT_FOUND(5001, "Booking not found", HttpStatus.NOT_FOUND),
+    ALREADY_ENROLLED(5002, "You are already enrolled in this course", HttpStatus.BAD_REQUEST),
+    COURSE_NOT_PUBLISHED(5003, "Cannot book a course that is not published", HttpStatus.BAD_REQUEST),
+    BOOKING_ALREADY_EXISTS(5004, "You already have a pending booking for this course", HttpStatus.BAD_REQUEST),
+
+    // PAYMENT & TRANSACTION (60xx)
+    PAYMENT_FAILED(6001, "Error creating payment link", HttpStatus.INTERNAL_SERVER_ERROR),
+    TRANSACTION_NOT_FOUND(6002, "Transaction not found", HttpStatus.NOT_FOUND),
+    INVALID_WEBHOOK_DATA(6003, "Invalid webhook signature or data", HttpStatus.BAD_REQUEST),
+    PAYMENT_ALREADY_PROCESSED(6004, "This payment is already processed", HttpStatus.BAD_REQUEST),
 
     // VALIDATION (80xx)
     INVALID_PASSWORD(8001, "Password must be at least 8 characters", HttpStatus.BAD_REQUEST),
