@@ -1,0 +1,77 @@
+### 1. Register a new user
+POST http://localhost:8080/auth/register
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "password": "password123",
+  "email": "testuser@gmail.com",
+  "fullName": "Test User"
+}
+
+> {%
+    client.global.set("username", response.body.result.username);
+%}
+
+### 2. Login
+POST http://localhost:8080/auth/login
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "password": "password123"
+}
+
+> {%
+    client.global.set("auth_token", response.body.result.token);
+    client.log("Token saved: " + client.global.get("auth_token"));
+%}
+
+### 3. Get My Info (Authenticate success)
+GET http://localhost:8080/users/my-info
+Authorization: Bearer {{auth_token}}
+
+### 4. Introspect Token (Check if valid)
+POST http://localhost:8080/auth/introspect
+Content-Type: application/json
+
+{
+  "token": "{{auth_token}}"
+}
+
+### 5. Refresh Token (Get new token)
+POST http://localhost:8080/auth/refresh
+Content-Type: application/json
+
+{
+  "token": "{{auth_token}}"
+}
+
+> {%
+    client.global.set("new_auth_token", response.body.result.token);
+    client.log("New Token saved: " + client.global.get("new_auth_token"));
+%}
+
+### 6. Logout (Revoke old token)
+POST http://localhost:8080/auth/logout
+Content-Type: application/json
+
+{
+  "token": "{{auth_token}}"
+}
+
+### 7. Get My Info again with OLD token (Should FAIL - 401 Unauthorized)
+GET http://localhost:8080/users/my-info
+Authorization: Bearer {{auth_token}}
+
+### 8. Introspect OLD Token (Should be invalid)
+POST http://localhost:8080/auth/introspect
+Content-Type: application/json
+
+{
+  "token": "{{auth_token}}"
+}
+
+### 9. Get My Info with NEW token (Should SUCCESS)
+GET http://localhost:8080/users/my-info
+Authorization: Bearer {{new_auth_token}}

@@ -21,6 +21,17 @@ public class GlobalExceptionHandler {
                         .build());
     }
 
+    @ExceptionHandler(value = org.springframework.security.access.AccessDeniedException.class)
+    ResponseEntity<ApiResponse<?>> handlingAccessDeniedException(org.springframework.security.access.AccessDeniedException exception) {
+        ErrorCode errorCode = ErrorCode.UNAUTHORIZED;
+        log.warn("Access Denied: {}", exception.getMessage());
+        return ResponseEntity.status(errorCode.getStatusCode())
+                .body(ApiResponse.builder()
+                        .code(errorCode.getCode())
+                        .message(errorCode.getMessage())
+                        .build());
+    }
+
     @ExceptionHandler(value = MethodArgumentNotValidException.class)
     ResponseEntity<ApiResponse<?>> handlingValidationException(MethodArgumentNotValidException exception) {
         String enumKey = exception.getBindingResult()

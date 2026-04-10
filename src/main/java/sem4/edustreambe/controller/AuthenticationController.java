@@ -10,7 +10,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import sem4.edustreambe.dto.auth.request.AuthenticationRequest;
+import sem4.edustreambe.dto.auth.request.IntrospectRequest;
+import sem4.edustreambe.dto.auth.request.LogoutRequest;
+import sem4.edustreambe.dto.auth.request.RefreshRequest;
 import sem4.edustreambe.dto.auth.response.AuthenticationResponse;
+import sem4.edustreambe.dto.auth.response.IntrospectResponse;
 import sem4.edustreambe.dto.common.ApiResponse;
 import sem4.edustreambe.dto.user.request.UserCreationRequest;
 import sem4.edustreambe.dto.user.response.UserResponse;
@@ -48,4 +52,25 @@ public class AuthenticationController {
                 .build();
     }
 
+    @PostMapping("/introspect")
+    public ApiResponse<IntrospectResponse> introspect(@RequestBody IntrospectRequest request) {
+        var result = authenticationService.introspect(request);
+        return ApiResponse.<IntrospectResponse>builder()
+                .result(result)
+                .build();
+    }
+
+    @PostMapping("/logout")
+    public ApiResponse<Void> logout(@RequestBody LogoutRequest request) {
+        authenticationService.logout(request);
+        return ApiResponse.<Void>builder().build();
+    }
+
+    @PostMapping("/refresh")
+    public ApiResponse<AuthenticationResponse> refresh(@RequestBody RefreshRequest request) {
+        var result = authenticationService.refreshToken(request);
+        return ApiResponse.<AuthenticationResponse>builder()
+                .result(result)
+                .build();
+    }
 }

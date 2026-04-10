@@ -2,7 +2,9 @@ package sem4.edustreambe.service;
 
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
+import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -12,16 +14,24 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import sem4.edustreambe.dto.auth.request.AuthenticationRequest;
+import sem4.edustreambe.dto.auth.request.IntrospectRequest;
+import sem4.edustreambe.dto.auth.request.LogoutRequest;
+import sem4.edustreambe.dto.auth.request.RefreshRequest;
 import sem4.edustreambe.dto.auth.response.AuthenticationResponse;
+import sem4.edustreambe.dto.auth.response.IntrospectResponse;
+import sem4.edustreambe.entity.InvalidatedToken;
 import sem4.edustreambe.entity.User;
 import sem4.edustreambe.exception.AppException;
 import sem4.edustreambe.exception.ErrorCode;
+import sem4.edustreambe.repository.InvalidatedTokenRepository;
 import sem4.edustreambe.repository.UserRepository;
 
+import java.text.ParseException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.StringJoiner;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -30,11 +40,33 @@ import java.util.StringJoiner;
 public class AuthenticationService {
 
     UserRepository userRepository;
+    InvalidatedTokenRepository invalidatedTokenRepository;
     PasswordEncoder passwordEncoder;
 
     @NonFinal
     @Value("${jwt.signerKey}")
     protected String SIGNER_KEY;
+
+    @NonFinal
+    @Value("${jwt.valid-duration}")
+    protected long VALID_DURATION;
+
+    @NonFinal
+    @Value("${jwt.refreshable-duration}")
+    protected long REFRESHABLE_DURATION;
+
+    public IntrospectResponse introspect(IntrospectRequest request) {
+        var token = request.getToken();
+        boolean isValid = true;
+        try {
+            verifyToken(token, false);
+        } catch (AppException e) {
+            isValid = false;
+        }
+        return IntrospectResponse.builder()
+                .valid(isValid)
+                .build();
+    }
 
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
         log.info("Attempting login for user: {}", request.getUsername());
@@ -57,6 +89,85 @@ public class AuthenticationService {
                 .build();
     }
 
+    public void logout(LogoutRequest request) {
+        try {
+            var signToken = verifyToken(request.getToken(), true);
+
+            String jit = signToken.getJWTClaimsSet().getJWTID();
+            Date expiryTime = signToken.getJWTClaimsSet().getExpirationTime();
+
+            InvalidatedToken invalidatedToken = InvalidatedToken.builder()
+                    .id(jit)
+                    .expiryTime(expiryTime)
+                    .build();
+
+            invalidatedTokenRepository.save(invalidatedToken);
+        } catch (AppException exception) {
+            log.info("Token already expired or invalid");
+        } catch (ParseException e) {
+            log.error("Error parsing token during logout", e);
+        }
+    }
+
+    public AuthenticationResponse refreshToken(RefreshRequest request) {
+        try {
+            var signedJWT = verifyToken(request.getToken(), true);
+
+            var jit = signedJWT.getJWTClaimsSet().getJWTID();
+            var expiryTime = signedJWT.getJWTClaimsSet().getExpirationTime();
+
+            InvalidatedToken invalidatedToken = InvalidatedToken.builder()
+                    .id(jit)
+                    .expiryTime(expiryTime)
+                    .build();
+            invalidatedTokenRepository.save(invalidatedToken);
+
+            var username = signedJWT.getJWTClaimsSet().getSubject();
+
+            var user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new AppException(ErrorCode.UNAUTHENTICATED));
+
+            var token = generateToken(user);
+
+            return AuthenticationResponse.builder()
+                    .token(token)
+                    .authenticated(true)
+                    .build();
+
+        } catch (ParseException e) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+    }
+
+    private SignedJWT verifyToken(String token, boolean isRefresh) {
+        try {
+            JWSVerifier verifier = new MACVerifier(SIGNER_KEY.getBytes());
+            SignedJWT signedJWT = SignedJWT.parse(token);
+
+            boolean verified = signedJWT.verify(verifier);
+            if (!verified) {
+                throw new AppException(ErrorCode.UNAUTHENTICATED);
+            }
+
+            Date expiryTime = (isRefresh)
+                    ? new Date(signedJWT.getJWTClaimsSet().getIssueTime().toInstant().plus(REFRESHABLE_DURATION, ChronoUnit.SECONDS).toEpochMilli())
+                    : signedJWT.getJWTClaimsSet().getExpirationTime();
+
+            if (expiryTime.before(new Date())) {
+                throw new AppException(ErrorCode.UNAUTHENTICATED);
+            }
+
+            if (invalidatedTokenRepository.existsById(signedJWT.getJWTClaimsSet().getJWTID())) {
+                throw new AppException(ErrorCode.UNAUTHENTICATED);
+            }
+
+            return signedJWT;
+
+        } catch (JOSEException | ParseException e) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+    }
+
     private String generateToken(User user) {
         log.debug("Generating token for subject: {}", user.getUsername());
 
@@ -67,8 +178,9 @@ public class AuthenticationService {
                 .issuer("edustream.com")
                 .issueTime(new Date())
                 .expirationTime(new Date(
-                        Instant.now().plus(1, ChronoUnit.HOURS).toEpochMilli()
+                        Instant.now().plus(VALID_DURATION, ChronoUnit.SECONDS).toEpochMilli()
                 ))
+                .jwtID(UUID.randomUUID().toString())
                 .claim("userId", user.getId().toString())
                 .claim("scope", buildScope(user))
                 .build();
@@ -88,7 +200,7 @@ public class AuthenticationService {
     private String buildScope(User user) {
         StringJoiner stringJoiner = new StringJoiner(" ");
         if (user.getRole() != null) {
-            stringJoiner.add(user.getRole().getName());
+            stringJoiner.add("ROLE_" + user.getRole().getName());
         }
         return stringJoiner.toString();
     }

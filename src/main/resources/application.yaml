@@ -37,5 +37,5 @@ spring:
 
 jwt:
   signerKey: ${JWT_SIGNER_KEY}
-#  valid-duration: ${JWT_VALID_DURATION:3600}
-#  refreshable-duration: ${JWT_REFRESHABLE_DURATION:86400}
+  valid-duration: ${JWT_VALID_DURATION:3600}
+  refreshable-duration: ${JWT_REFRESHABLE_DURATION:36000}
