@@ -1,5 +1,6 @@
 package sem4.edustreambe.controller;
 
+import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -12,7 +13,7 @@ import sem4.edustreambe.dto.auth.request.AuthenticationRequest;
 import sem4.edustreambe.dto.auth.response.AuthenticationResponse;
 import sem4.edustreambe.dto.common.ApiResponse;
 import sem4.edustreambe.dto.user.request.UserCreationRequest;
-import sem4.edustreambe.entity.User;
+import sem4.edustreambe.dto.user.response.UserResponse;
 import sem4.edustreambe.service.AuthenticationService;
 import sem4.edustreambe.service.UserService;
 
@@ -38,11 +39,11 @@ public class AuthenticationController {
     }
 
     @PostMapping("/register")
-    public ApiResponse<User> createUser(@RequestBody UserCreationRequest request) {
+    public ApiResponse<UserResponse> createUser(@RequestBody @Valid UserCreationRequest request) {
         log.info("Received registration request: {}", request.getUsername());
         var result = userService.createUser(request);
 
-        return ApiResponse.<User>builder()
+        return ApiResponse.<UserResponse>builder()
                 .result(result)
                 .build();
     }

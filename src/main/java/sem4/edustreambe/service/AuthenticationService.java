@@ -70,6 +70,7 @@ public class AuthenticationService {
                         Instant.now().plus(1, ChronoUnit.HOURS).toEpochMilli()
                 ))
                 .claim("userId", user.getId().toString())
+                .claim("scope", buildScope(user))
                 .build();
 
         Payload payload = new Payload(jwtClaimsSet.toJSONObject());
@@ -80,14 +81,14 @@ public class AuthenticationService {
             return jwsObject.serialize();
         } catch (JOSEException e) {
             log.error("Cannot create JWT for user: {}", user.getUsername(), e);
-            throw new RuntimeException("Error signing token", e);
+            throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
         }
     }
 
     private String buildScope(User user) {
         StringJoiner stringJoiner = new StringJoiner(" ");
-        if (user.getRoles() != null) {
-            user.getRoles().forEach(role -> stringJoiner.add(role.getName()));
+        if (user.getRole() != null) {
+            stringJoiner.add(user.getRole().getName());
         }
         return stringJoiner.toString();
     }
