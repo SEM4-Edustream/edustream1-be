@@ -45,3 +45,10 @@ payos:
   client-id: ${PAYOS_CLIENT_ID:dummy-client-id}
   api-key: ${PAYOS_API_KEY:dummy-api-key}
   checksum-key: ${PAYOS_CHECKSUM_KEY:dummy-checksum-key}
+
+aws:
+  s3:
+    region: ${AWS_S3_REGION:ap-southeast-1}
+    bucket: ${AWS_S3_BUCKET:dummy-bucket}
+    access-key: ${AWS_ACCESS_KEY:dummy-access}
+    secret-key: ${AWS_SECRET_KEY:dummy-secret}
