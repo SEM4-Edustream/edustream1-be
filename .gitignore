@@ -32,6 +32,8 @@ build/
 ### VS Code ###
 .vscode/
 .env
+.env.production
+certbot/
 mvnw
 mvnw.cmd
 .cursorrules

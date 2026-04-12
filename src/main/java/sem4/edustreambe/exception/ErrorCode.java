@@ -44,6 +44,8 @@ public enum ErrorCode {
     ALREADY_ENROLLED(5002, "You are already enrolled in this course", HttpStatus.BAD_REQUEST),
     COURSE_NOT_PUBLISHED(5003, "Cannot book a course that is not published", HttpStatus.BAD_REQUEST),
     BOOKING_ALREADY_EXISTS(5004, "You already have a pending booking for this course", HttpStatus.BAD_REQUEST),
+    ENROLLMENT_NOT_FOUND(5005, "You are not enrolled in this course", HttpStatus.FORBIDDEN),
+    LESSON_ALREADY_COMPLETED(5006, "You have already completed this lesson", HttpStatus.BAD_REQUEST),
 
     // PAYMENT & TRANSACTION (60xx)
     PAYMENT_FAILED(6001, "Error creating payment link", HttpStatus.INTERNAL_SERVER_ERROR),

@@ -13,5 +13,6 @@ import java.util.UUID;
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, String> {
     List<Booking> findByUserId(UUID userId);
+
     Optional<Booking> findByUserIdAndCourseIdAndStatus(UUID userId, String courseId, BookingStatus status);
 }

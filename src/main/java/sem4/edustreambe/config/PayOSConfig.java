@@ -1,4 +1,4 @@
-package sem4.edustreambe.configuration;
+package sem4.edustreambe.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

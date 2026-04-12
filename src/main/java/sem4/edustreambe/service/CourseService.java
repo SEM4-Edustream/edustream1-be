@@ -59,11 +59,11 @@ public class CourseService {
 
     public CourseResponse createCourse(CourseCreationRequest request) {
         TutorProfile tutorProfile = getCurrentTutorProfile();
-        
+
         Course course = courseMapper.toCourse(request);
         course.setTutorProfile(tutorProfile);
         course.setStatus(CourseStatus.DRAFT);
-        
+
         Course saved = courseRepository.save(course);
         log.info("Course created: [{}] by tutor: [{}]", saved.getId(), tutorProfile.getId());
         return courseMapper.toCourseResponse(saved);
@@ -86,9 +86,9 @@ public class CourseService {
     public CourseResponse updateCourse(String courseId, CourseUpdateRequest request) {
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
-                
+
         verifyCourseOwnership(course);
-        
+
         if (course.getStatus() == CourseStatus.PUBLISHED || course.getStatus() == CourseStatus.PENDING) {
             throw new AppException(ErrorCode.INVALID_COURSE_STATUS);
         }
@@ -104,7 +104,7 @@ public class CourseService {
     public CourseModuleResponse addModule(String courseId, CourseModuleRequest request) {
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
-        
+
         verifyCourseOwnership(course);
         if (course.getStatus() == CourseStatus.PUBLISHED || course.getStatus() == CourseStatus.PENDING) {
             throw new AppException(ErrorCode.INVALID_COURSE_STATUS);
@@ -112,7 +112,7 @@ public class CourseService {
 
         CourseModule module = courseMapper.toCourseModule(request);
         module.setCourse(course);
-        
+
         CourseModule saved = moduleRepository.save(module);
         return courseMapper.toCourseModuleResponse(saved);
     }
@@ -124,15 +124,16 @@ public class CourseService {
     public LessonResponse addLesson(String moduleId, LessonRequest request) {
         CourseModule module = moduleRepository.findById(moduleId)
                 .orElseThrow(() -> new AppException(ErrorCode.MODULE_NOT_FOUND));
-                
+
         verifyCourseOwnership(module.getCourse());
-        if (module.getCourse().getStatus() == CourseStatus.PUBLISHED || module.getCourse().getStatus() == CourseStatus.PENDING) {
+        if (module.getCourse().getStatus() == CourseStatus.PUBLISHED
+                || module.getCourse().getStatus() == CourseStatus.PENDING) {
             throw new AppException(ErrorCode.INVALID_COURSE_STATUS);
         }
 
         Lesson lesson = courseMapper.toLesson(request);
         lesson.setModule(module);
-        
+
         Lesson saved = lessonRepository.save(lesson);
         return courseMapper.toLessonResponse(saved);
     }
@@ -144,9 +145,9 @@ public class CourseService {
     public CourseResponse submitCourse(String courseId) {
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
-                
+
         verifyCourseOwnership(course);
-        
+
         if (course.getStatus() != CourseStatus.DRAFT && course.getStatus() != CourseStatus.REJECTED) {
             throw new AppException(ErrorCode.INVALID_COURSE_STATUS);
         }
@@ -173,7 +174,7 @@ public class CourseService {
     public CourseResponse reviewCourse(String courseId, boolean isApprove) {
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
-                
+
         if (course.getStatus() != CourseStatus.PENDING) {
             throw new AppException(ErrorCode.INVALID_COURSE_STATUS);
         }

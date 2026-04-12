@@ -42,6 +42,10 @@ public class PaymentService {
     PaymentTransactionRepository transactionRepository;
     EnrollmentRepository enrollmentRepository;
 
+    @org.springframework.beans.factory.annotation.Value("${app.frontend.url:http://localhost:3000}")
+    @lombok.experimental.NonFinal
+    String frontendUrl;
+
     private User getCurrentUser() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         return userRepository.findByUsername(username)
@@ -81,8 +85,8 @@ public class PaymentService {
                 .price(amount)
                 .build();
 
-        String returnUrl = "http://localhost:3000/payment/success";
-        String cancelUrl = "http://localhost:3000/payment/cancel";
+        String returnUrl = frontendUrl + "/payment/success";
+        String cancelUrl = frontendUrl + "/payment/cancel";
 
         CreatePaymentLinkRequest paymentData = CreatePaymentLinkRequest.builder()
                 .orderCode(orderCode)
@@ -119,10 +123,11 @@ public class PaymentService {
 
     @Transactional
     @SuppressWarnings("unchecked")
-    public com.fasterxml.jackson.databind.node.ObjectNode handlePayOSWebhook(com.fasterxml.jackson.databind.node.ObjectNode body) {
+    public com.fasterxml.jackson.databind.node.ObjectNode handlePayOSWebhook(
+            com.fasterxml.jackson.databind.node.ObjectNode body) {
         com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
         com.fasterxml.jackson.databind.node.ObjectNode response = mapper.createObjectNode();
-        
+
         try {
             // Verify webhook data and extract payment info using SDK v2
             vn.payos.model.webhooks.WebhookData data = payOS.webhooks().verify(body);
@@ -136,7 +141,7 @@ public class PaymentService {
             }
 
             Long orderCode = data.getOrderCode();
-            
+
             // Check if mock order code from PayOS test webhook dashboard
             if (String.valueOf(orderCode).equals("123") || "test webhook".equalsIgnoreCase(data.getDescription())) {
                 log.info("Received mock webhook from PayOS. Returning 200 OK.");
@@ -154,7 +159,7 @@ public class PaymentService {
                 response.set("data", null);
                 return response;
             }
-            
+
             PaymentTransaction tx = txOpt.get();
 
             if (tx.getStatus() == TransactionStatus.PAID) {
@@ -175,7 +180,8 @@ public class PaymentService {
             bookingRepository.save(booking);
 
             // Create Enrollment
-            if (!enrollmentRepository.existsByUserIdAndCourseId(booking.getUser().getId(), booking.getCourse().getId())) {
+            if (!enrollmentRepository.existsByUserIdAndCourseId(booking.getUser().getId(),
+                    booking.getCourse().getId())) {
                 Enrollment enrollment = Enrollment.builder()
                         .user(booking.getUser())
                         .course(booking.getCourse())
