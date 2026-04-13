@@ -44,6 +44,14 @@ public class Course extends BaseEntity {
     @Builder.Default
     CourseStatus status = CourseStatus.DRAFT;
 
+    @Column(name = "average_rating")
+    @Builder.Default
+    Float averageRating = 0.0f;
+
+    @Column(name = "review_count")
+    @Builder.Default
+    Integer reviewCount = 0;
+
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("orderIndex ASC")
     List<CourseModule> modules;

@@ -194,4 +194,28 @@ public class CourseService {
             throw new AppException(ErrorCode.COURSE_OWNERSHIP_DENIED);
         }
     }
+
+    // ==========================================
+    // PUBLIC: COURSE BROWSING
+    // ==========================================
+
+    public org.springframework.data.domain.Page<CourseResponse> getPublicCourses(String keyword, org.springframework.data.domain.Pageable pageable) {
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            return courseRepository.findByStatusAndTitleContainingIgnoreCase(CourseStatus.PUBLISHED, keyword.trim(), pageable)
+                    .map(courseMapper::toCourseResponse);
+        }
+        return courseRepository.findByStatus(CourseStatus.PUBLISHED, pageable)
+                .map(courseMapper::toCourseResponse);
+    }
+
+    public CourseResponse getPublicCourseDetail(String courseId) {
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
+
+        if (course.getStatus() != CourseStatus.PUBLISHED) {
+            throw new AppException(ErrorCode.COURSE_NOT_FOUND); // Ẩn lỗi để giả vờ khóa chưa tồn tại
+        }
+
+        return courseMapper.toCourseResponse(course);
+    }
 }

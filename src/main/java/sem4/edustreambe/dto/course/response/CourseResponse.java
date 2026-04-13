@@ -21,5 +21,7 @@ public class CourseResponse {
     String thumbnailUrl;
     BigDecimal price;
     CourseStatus status;
+    Float averageRating;
+    Integer reviewCount;
     List<CourseModuleResponse> modules;
 }

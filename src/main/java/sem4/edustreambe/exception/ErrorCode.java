@@ -56,7 +56,13 @@ public enum ErrorCode {
     // VALIDATION (80xx)
     INVALID_PASSWORD(8001, "Password must be at least 8 characters", HttpStatus.BAD_REQUEST),
     USERNAME_INVALID(8002, "Username must be at least 3 characters", HttpStatus.BAD_REQUEST),
-    INVALID_EMAIL(8003, "Invalid email format", HttpStatus.BAD_REQUEST)
+    INVALID_EMAIL(8003, "Invalid email format", HttpStatus.BAD_REQUEST),
+    
+    // REVIEWS (70xx)
+    REVIEW_ALREADY_EXISTS(7001, "You have already reviewed this course", HttpStatus.BAD_REQUEST),
+    MUST_ENROLL_TO_REVIEW(7002, "You must enroll in this course to leave a review", HttpStatus.FORBIDDEN),
+    INVALID_RATING(7003, "Rating must be between 1 and 5", HttpStatus.BAD_REQUEST),
+    INVALID_COMMENT(7004, "Comment cannot be empty", HttpStatus.BAD_REQUEST)
     ;
 
     int code;
