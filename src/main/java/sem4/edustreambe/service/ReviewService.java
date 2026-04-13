@@ -55,7 +55,7 @@ public class ReviewService {
         }
 
         // Chặn: 1 người chỉ 1 review
-        boolean hasReviewed = courseReviewRepository.existsByUserIdAndCourseId(currentUser.getId().toString(), courseId);
+        boolean hasReviewed = courseReviewRepository.existsByUserIdAndCourseId(currentUser.getId(), courseId);
         if (hasReviewed) {
             throw new AppException(ErrorCode.REVIEW_ALREADY_EXISTS);
         }
