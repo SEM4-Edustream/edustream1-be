@@ -5,6 +5,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -15,7 +16,17 @@ public class CourseUpdateRequest {
 
     String title;
 
+    String subtitle;
+
     String description;
+
+    String language;
+    String level;
+    String category;
+
+    List<String> learningObjectives;
+    List<String> prerequisites;
+    List<String> targetAudiences;
 
     String thumbnailUrl;
 
