@@ -19,6 +19,7 @@ import sem4.edustreambe.enums.CourseStatus;
 import sem4.edustreambe.exception.AppException;
 import sem4.edustreambe.exception.ErrorCode;
 import sem4.edustreambe.mapper.CourseMapper;
+import sem4.edustreambe.repository.CategoryRepository;
 import sem4.edustreambe.repository.CourseModuleRepository;
 import sem4.edustreambe.repository.CourseRepository;
 import sem4.edustreambe.repository.LessonRepository;
