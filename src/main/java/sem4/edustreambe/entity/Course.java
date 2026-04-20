@@ -30,36 +30,8 @@ public class Course extends BaseEntity {
     @Column(nullable = false, length = 255)
     String title;
 
-    @Column(length = 255)
-    String subtitle;
-
     @Column(columnDefinition = "TEXT")
     String description;
-
-    @Column(length = 50)
-    @Builder.Default
-    String language = "English (US)";
-
-    @Column(length = 50)
-    String level;
-
-    @Column(length = 100)
-    String category;
-
-    @ElementCollection(fetch = FetchType.LAZY)
-    @CollectionTable(name = "course_learning_objectives", joinColumns = @JoinColumn(name = "course_id"))
-    @Column(name = "objective", length = 500)
-    List<String> learningObjectives;
-
-    @ElementCollection(fetch = FetchType.LAZY)
-    @CollectionTable(name = "course_prerequisites", joinColumns = @JoinColumn(name = "course_id"))
-    @Column(name = "prerequisite", length = 500)
-    List<String> prerequisites;
-
-    @ElementCollection(fetch = FetchType.LAZY)
-    @CollectionTable(name = "course_target_audiences", joinColumns = @JoinColumn(name = "course_id"))
-    @Column(name = "audience", length = 500)
-    List<String> targetAudiences;
 
     @Column(length = 1000)
     String thumbnailUrl;
@@ -79,6 +51,10 @@ public class Course extends BaseEntity {
     @Column(name = "review_count")
     @Builder.Default
     Integer reviewCount = 0;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    Category category;
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("orderIndex ASC")

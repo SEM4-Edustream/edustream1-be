@@ -17,18 +17,12 @@ public class CourseResponse {
     String tutorProfileId;
     String tutorName;
     String title;
-    String subtitle;
     String description;
-    String language;
-    String level;
-    String category;
-    List<String> learningObjectives;
-    List<String> prerequisites;
-    List<String> targetAudiences;
     String thumbnailUrl;
     BigDecimal price;
     CourseStatus status;
     Float averageRating;
     Integer reviewCount;
+    CategoryResponse category;
     List<CourseModuleResponse> modules;
 }

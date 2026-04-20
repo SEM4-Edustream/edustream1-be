@@ -37,6 +37,7 @@ public class CourseService {
     UserRepository userRepository;
     TutorProfileRepository tutorProfileRepository;
     CourseRepository courseRepository;
+    CategoryRepository categoryRepository;
     CourseModuleRepository moduleRepository;
     LessonRepository lessonRepository;
     CourseMapper courseMapper;
@@ -63,6 +64,12 @@ public class CourseService {
         Course course = courseMapper.toCourse(request);
         course.setTutorProfile(tutorProfile);
         course.setStatus(CourseStatus.DRAFT);
+
+        if (request.getCategoryId() != null) {
+            Category category = categoryRepository.findById(request.getCategoryId())
+                    .orElseThrow(() -> new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION)); // Category not found
+            course.setCategory(category);
+        }
 
         Course saved = courseRepository.save(course);
         log.info("Course created: [{}] by tutor: [{}]", saved.getId(), tutorProfile.getId());
@@ -94,6 +101,13 @@ public class CourseService {
         }
 
         courseMapper.updateCourse(course, request);
+
+        if (request.getCategoryId() != null) {
+            Category category = categoryRepository.findById(request.getCategoryId())
+                    .orElseThrow(() -> new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION));
+            course.setCategory(category);
+        }
+
         return courseMapper.toCourseResponse(courseRepository.save(course));
     }
 
