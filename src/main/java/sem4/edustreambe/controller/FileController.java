@@ -14,6 +14,9 @@ import org.springframework.web.bind.annotation.RestController;
 import sem4.edustreambe.dto.common.ApiResponse;
 import sem4.edustreambe.service.FileService;
 
+import sem4.edustreambe.dto.common.FileResponse;
+import sem4.edustreambe.constant.PredefinedRole;
+
 @RestController
 @RequestMapping("/api/files")
 @RequiredArgsConstructor
@@ -25,12 +28,12 @@ public class FileController {
 
     @GetMapping("/presigned-url")
     @Operation(summary = "Lấy URL cấp quyền upload file trực tiếp lên AWS S3 (hạn 15 phút)", security = @SecurityRequirement(name = "bearerAuth"))
-    @PreAuthorize("hasAnyRole('TUTOR', 'ADMIN')")
-    public ApiResponse<String> getPresignedUrl(@RequestParam String fileName, @RequestParam String contentType) {
-        String uploadUrl = fileService.generatePresignedUploadUrl(fileName, contentType);
-        return ApiResponse.<String>builder()
+    @PreAuthorize("hasAnyRole('TUTOR', 'ADMIN', 'STUDENT')")
+    public ApiResponse<FileResponse> getPresignedUrl(@RequestParam String fileName, @RequestParam String contentType) {
+        FileResponse response = fileService.generatePresignedUploadUrl(fileName, contentType);
+        return ApiResponse.<FileResponse>builder()
                 .message("URL Upload file được sinh thành công")
-                .result(uploadUrl)
+                .result(response)
                 .build();
     }
 }

@@ -25,7 +25,7 @@ public class FileService {
     @Value("${aws.s3.bucket}")
     String bucketName;
 
-    public String generatePresignedUploadUrl(String originalFileName, String contentType) {
+    public sem4.edustreambe.dto.common.FileResponse generatePresignedUploadUrl(String originalFileName, String contentType) {
         if (s3Presigner == null) {
             throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION); // "S3 is not configured"
         }
@@ -46,6 +46,12 @@ public class FileService {
 
         PresignedPutObjectRequest presignedRequest = s3Presigner.presignPutObject(presignRequest);
 
-        return presignedRequest.url().toString();
+        // URL để truy cập file sau khi upload (nên là URL không kèm signature)
+        String fileUrl = String.format("https://%s.s3.amazonaws.com/%s", bucketName, uniqueFileName);
+
+        return sem4.edustreambe.dto.common.FileResponse.builder()
+                .uploadUrl(presignedRequest.url().toString())
+                .fileUrl(fileUrl)
+                .build();
     }
 }
