@@ -78,4 +78,15 @@ public class UserService {
         userMapper.updateUser(user, request);
         return userMapper.toUserResponse(userRepository.save(user));
     }
+
+    public UserResponse updateAvatar(sem4.edustreambe.dto.user.request.AvatarUpdateRequest request) {
+        var context = SecurityContextHolder.getContext();
+        String name = context.getAuthentication().getName();
+
+        User user = userRepository.findByUsername(name)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        user.setAvatarUrl(request.getAvatarUrl());
+        return userMapper.toUserResponse(userRepository.save(user));
+    }
 }

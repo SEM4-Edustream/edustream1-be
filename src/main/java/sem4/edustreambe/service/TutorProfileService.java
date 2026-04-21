@@ -88,9 +88,10 @@ public class TutorProfileService {
         TutorProfile profile = tutorProfileRepository.findByUserId(currentUser.getId())
                 .orElseThrow(() -> new AppException(ErrorCode.TUTOR_PROFILE_NOT_FOUND));
 
-        // Chỉ cho phép sửa khi đang ở DRAFT hoặc REJECTED
+        // Chỉ cho phép sửa khi đang ở DRAFT, REJECTED hoặc APPROVED (đã duyệt vẫn cho sửa Bio/Headline)
         if (profile.getStatus() != VerificationStatus.DRAFT
-                && profile.getStatus() != VerificationStatus.REJECTED) {
+                && profile.getStatus() != VerificationStatus.REJECTED
+                && profile.getStatus() != VerificationStatus.APPROVED) {
             log.warn("User [{}] tried to update profile in status [{}]", currentUser.getUsername(), profile.getStatus());
             throw new AppException(ErrorCode.INVALID_PROFILE_STATUS);
         }
