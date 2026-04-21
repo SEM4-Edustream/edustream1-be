@@ -23,18 +23,24 @@ public class FileService {
     final S3Presigner s3Presigner;
 
     @Value("${aws.s3.bucket}")
-    String bucketName;
+    String videoBucket;
 
-    public sem4.edustreambe.dto.common.FileResponse generatePresignedUploadUrl(String originalFileName, String contentType) {
+    @Value("${aws.s3.document-bucket}")
+    String documentBucket;
+
+    public sem4.edustreambe.dto.common.FileResponse generatePresignedUploadUrl(String originalFileName, String contentType, sem4.edustreambe.enums.BucketType type) {
         if (s3Presigner == null) {
             throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION); // "S3 is not configured"
         }
+
+        // Chọn bucket dựa trên loại
+        String targetBucket = (type == sem4.edustreambe.enums.BucketType.DOCUMENT) ? documentBucket : videoBucket;
 
         // Tạo khóa định danh riêng biệt chống trùng lặp file name
         String uniqueFileName = UUID.randomUUID().toString() + "_" + originalFileName.replaceAll("\\s+", "_");
 
         PutObjectRequest objectRequest = PutObjectRequest.builder()
-                .bucket(bucketName)
+                .bucket(targetBucket)
                 .key(uniqueFileName)
                 .contentType(contentType)
                 .build();
@@ -46,8 +52,8 @@ public class FileService {
 
         PresignedPutObjectRequest presignedRequest = s3Presigner.presignPutObject(presignRequest);
 
-        // URL để truy cập file sau khi upload (nên là URL không kèm signature)
-        String fileUrl = String.format("https://%s.s3.amazonaws.com/%s", bucketName, uniqueFileName);
+        // URL để truy cập file sau khi upload
+        String fileUrl = String.format("https://%s.s3.amazonaws.com/%s", targetBucket, uniqueFileName);
 
         return sem4.edustreambe.dto.common.FileResponse.builder()
                 .uploadUrl(presignedRequest.url().toString())
