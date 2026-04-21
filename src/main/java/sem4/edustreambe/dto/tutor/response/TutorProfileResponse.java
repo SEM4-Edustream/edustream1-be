@@ -13,6 +13,7 @@ import java.util.List;
 public class TutorProfileResponse {
 
     String id;
+    String tutorName;
     String headline;
     String bio;
     String videoIntroduction;
