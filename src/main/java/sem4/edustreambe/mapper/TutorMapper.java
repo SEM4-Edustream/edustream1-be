@@ -35,6 +35,7 @@ public interface TutorMapper {
     void updateTutorProfile(@MappingTarget TutorProfile profile, TutorProfileUpdateRequest request);
 
 
+    @Mapping(target = "tutorName", source = "user.fullName")
     TutorProfileResponse toTutorProfileResponse(TutorProfile profile);
 
     TutorDocumentResponse toTutorDocumentResponse(TutorDocument document);
