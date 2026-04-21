@@ -7,6 +7,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import sem4.edustreambe.dto.common.ApiResponse;
 import sem4.edustreambe.dto.user.request.AvatarUpdateRequest;
+import sem4.edustreambe.dto.user.request.UserUpdateRequest;
 import sem4.edustreambe.dto.user.response.UserResponse;
 import sem4.edustreambe.service.UserService;
 
@@ -31,6 +32,15 @@ public class UserController {
         return ApiResponse.<UserResponse>builder()
                 .result(userService.updateAvatar(request))
                 .message("Avatar updated successfully")
+                .build();
+    }
+
+    @PutMapping("/me")
+    @PreAuthorize("hasRole('STUDENT') or hasRole('ADMIN') or hasRole('TUTOR')")
+    public ApiResponse<UserResponse> updateMyInfo(@RequestBody UserUpdateRequest request) {
+        return ApiResponse.<UserResponse>builder()
+                .result(userService.updateMyInfo(request))
+                .message("User info updated successfully")
                 .build();
     }
 }
