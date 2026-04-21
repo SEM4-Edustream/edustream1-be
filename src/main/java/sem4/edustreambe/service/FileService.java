@@ -22,6 +22,9 @@ public class FileService {
 
     final S3Presigner s3Presigner;
 
+    @Value("${aws.s3.region:ap-southeast-2}")
+    String region;
+
     @Value("${aws.s3.bucket}")
     String videoBucket;
 
@@ -53,7 +56,7 @@ public class FileService {
         PresignedPutObjectRequest presignedRequest = s3Presigner.presignPutObject(presignRequest);
 
         // URL để truy cập file sau khi upload
-        String fileUrl = String.format("https://%s.s3.amazonaws.com/%s", targetBucket, uniqueFileName);
+        String fileUrl = String.format("https://%s.s3.%s.amazonaws.com/%s", targetBucket, region, uniqueFileName);
 
         return sem4.edustreambe.dto.common.FileResponse.builder()
                 .uploadUrl(presignedRequest.url().toString())
