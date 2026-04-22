@@ -31,6 +31,7 @@ public class UserService {
     RoleRepository roleRepository;
     PasswordEncoder passwordEncoder;
     UserMapper userMapper;
+    FileService fileService;
 
     public UserResponse createUser(UserCreationRequest request) {
         log.info("Creating new user with username: {}", request.getUsername());
@@ -85,6 +86,14 @@ public class UserService {
 
         User user = userRepository.findByUsername(name)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        String oldAvatarUrl = user.getAvatarUrl();
+        
+        // Delete old avatar if it's different and belongs to our S3
+        if (oldAvatarUrl != null && !oldAvatarUrl.equals(request.getAvatarUrl()) 
+                && oldAvatarUrl.contains(".amazonaws.com")) {
+            fileService.deleteFile(oldAvatarUrl);
+        }
 
         user.setAvatarUrl(request.getAvatarUrl());
         return userMapper.toUserResponse(userRepository.save(user));

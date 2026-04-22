@@ -5,6 +5,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
@@ -21,6 +23,7 @@ import java.util.UUID;
 public class FileService {
 
     final S3Presigner s3Presigner;
+    final S3Client s3Client;
 
     @Value("${aws.s3.region:ap-southeast-2}")
     String region;
@@ -62,5 +65,38 @@ public class FileService {
                 .uploadUrl(presignedRequest.url().toString())
                 .fileUrl(fileUrl)
                 .build();
+    }
+    public void deleteFile(String fileUrl) {
+        if (s3Client == null || fileUrl == null || fileUrl.isEmpty()) {
+            return;
+        }
+
+        try {
+            // Parse URL: https://bucket-name.s3.region.amazonaws.com/key
+            // Hoặc parse từ format: https://s3.region.amazonaws.com/bucket-name/key (tùy config)
+            // Trong FileService line 59: https://%s.s3.%s.amazonaws.com/%s
+            
+            String key = null;
+            String bucket = null;
+
+            if (fileUrl.contains(".s3.")) {
+                String temp = fileUrl.replace("https://", "");
+                bucket = temp.split("\\.")[0];
+                key = temp.substring(temp.indexOf("/") + 1);
+            }
+
+            if (bucket != null && key != null) {
+                DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
+                        .bucket(bucket)
+                        .key(key)
+                        .build();
+
+                s3Client.deleteObject(deleteObjectRequest);
+                // log.info("Deleted file from S3: {}", fileUrl);
+            }
+        } catch (Exception e) {
+            // log.error("Failed to delete file from S3: {}", fileUrl, e);
+            // Không throw exception để không làm gián đoạn luồng chính (chỉ là dọn dẹp)
+        }
     }
 }

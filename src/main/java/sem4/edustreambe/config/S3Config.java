@@ -25,6 +25,20 @@ public class S3Config {
     String region;
 
     @Bean
+    public S3Client s3Client() {
+        if ("dummy-access".equals(accessKey) || accessKey == null || accessKey.trim().isEmpty()) {
+            return null;
+        }
+
+        AwsBasicCredentials credentials = AwsBasicCredentials.create(accessKey, secretKey);
+
+        return S3Client.builder()
+                .region(Region.of(region))
+                .credentialsProvider(StaticCredentialsProvider.create(credentials))
+                .build();
+    }
+
+    @Bean
     public S3Presigner s3Presigner() {
         if ("dummy-access".equals(accessKey) || accessKey == null || accessKey.trim().isEmpty()) {
             return null; // Return null if not configured to prevent startup crash
