@@ -75,26 +75,19 @@ public class AuthenticationController {
     }
 
     @PostMapping("/outbound/authentication")
-    public ApiResponse<AuthenticationResponse> outboundAuthenticate(@org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.oauth2.jwt.Jwt jwt) {
-        log.info("Outbound authentication for subject: {}", jwt.getSubject());
+    public ApiResponse<AuthenticationResponse> outboundAuthenticate(@RequestBody sem4.edustreambe.dto.auth.request.OutboundAuthRequest request) {
+        log.info("Outbound authentication for email: {}", request.getEmail());
         
-        // Extract claims from Supabase JWT
-        String email = jwt.getClaim("email");
-        String name = jwt.getClaim("name");
-        
-        // Supabase picture claim is often in user_metadata or directly
-        Object rawMetadata = jwt.getClaim("user_metadata");
-        String avatarUrl = null;
-        if (rawMetadata instanceof java.util.Map) {
-            avatarUrl = (String) ((java.util.Map<?, ?>) rawMetadata).get("avatar_url");
-        }
-        
-        // Sync user
-        var syncResponse = userService.syncUserFromSocial(email, name, avatarUrl);
+        // Sync user using data sent from the frontend (extracted from Supabase session)
+        var syncResponse = userService.syncUserFromSocial(
+                request.getEmail(), 
+                request.getFullName(), 
+                request.getAvatarUrl()
+        );
         
         return ApiResponse.<AuthenticationResponse>builder()
                 .result(AuthenticationResponse.builder()
-                        .token(jwt.getTokenValue())
+                        .token(request.getToken())
                         .authenticated(true)
                         .isNewUser(syncResponse.isNewUser())
                         .build())
