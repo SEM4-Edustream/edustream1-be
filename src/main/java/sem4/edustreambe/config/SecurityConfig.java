@@ -52,7 +52,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.authorizeHttpRequests(request -> request
-                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/courses/**", "/api/reviews/courses/**").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/courses/**", "/api/categories/**", "/api/reviews/courses/**").permitAll()
                 .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
                 .anyRequest().authenticated());
 
