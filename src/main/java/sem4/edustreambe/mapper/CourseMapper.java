@@ -34,7 +34,7 @@ public interface CourseMapper {
     void updateCourse(@MappingTarget Course course, CourseUpdateRequest request);
 
     @Mapping(target = "tutorProfileId", source = "tutorProfile.id")
-    @Mapping(target = "tutorName", source = "tutorProfile.user.username")
+    @Mapping(target = "tutorName", source = "tutorProfile.user.fullName")
     CourseResponse toCourseResponse(Course course);
 
     @Mapping(target = "id", ignore = true)
