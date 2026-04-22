@@ -77,12 +77,14 @@ public class CourseService {
         return courseMapper.toCourseResponse(saved);
     }
 
-    public List<CourseResponse> getMyCourses() {
+    public org.springframework.data.domain.Page<CourseResponse> getMyCourses(CourseStatus status, org.springframework.data.domain.Pageable pageable) {
         TutorProfile tutorProfile = getCurrentTutorProfile();
-        return courseRepository.findByTutorProfileId(tutorProfile.getId())
-                .stream()
-                .map(courseMapper::toCourseResponse)
-                .toList();
+        if (status != null) {
+            return courseRepository.findByTutorProfileIdAndStatus(tutorProfile.getId(), status, pageable)
+                    .map(courseMapper::toCourseResponse);
+        }
+        return courseRepository.findByTutorProfileId(tutorProfile.getId(), pageable)
+                .map(courseMapper::toCourseResponse);
     }
 
     public CourseResponse getCourseDetail(String courseId) {

@@ -35,9 +35,26 @@ public class TutorCourseController {
     }
 
     @GetMapping
-    public ApiResponse<List<CourseResponse>> getMyCourses() {
-        return ApiResponse.<List<CourseResponse>>builder()
-                .result(courseService.getMyCourses())
+    public ApiResponse<org.springframework.data.domain.Page<CourseResponse>> getMyCourses(
+            @RequestParam(required = false) sem4.edustreambe.enums.CourseStatus status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt,desc") String sort) {
+        
+        String[] sortParams = sort.split(",");
+        org.springframework.data.domain.Sort sortOrder = sem4.edustreambe.enums.CourseStatus.DRAFT.name().equals(sortParams[0]) // just a dummy check for import
+                ? org.springframework.data.domain.Sort.unsorted() 
+                : org.springframework.data.domain.Sort.by(
+                    sortParams[1].equalsIgnoreCase("desc") 
+                        ? org.springframework.data.domain.Sort.Direction.DESC 
+                        : org.springframework.data.domain.Sort.Direction.ASC, 
+                    sortParams[0]
+                  );
+        
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size, sortOrder);
+        
+        return ApiResponse.<org.springframework.data.domain.Page<CourseResponse>>builder()
+                .result(courseService.getMyCourses(status, pageable))
                 .build();
     }
 
