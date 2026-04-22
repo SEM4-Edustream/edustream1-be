@@ -36,7 +36,7 @@ public class FileController {
         FileResponse response = fileService.generatePresignedUploadUrl(fileName, contentType, type);
         return ApiResponse.<FileResponse>builder()
                 .message("URL Upload file được sinh thành công")
-                .result(response)
+                .result(resd ponse)
                 .build();
     }
 }

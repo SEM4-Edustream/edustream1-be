@@ -1,5 +1,6 @@
 package sem4.edustreambe.service;
 
+import java.time.LocalDateTime;
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -148,8 +149,9 @@ public class TutorProfileService {
             }
 
             profile.setStatus(VerificationStatus.PENDING);
+            profile.setVerificationStartDate(LocalDateTime.now());
             TutorProfile saved = tutorProfileRepository.save(profile);
-            log.info("Profile [{}] status changed to PENDING", saved.getId());
+            log.info("Profile [{}] status changed to PENDING at [{}]", saved.getId(), saved.getVerificationStartDate());
 
             return tutorMapper.toTutorProfileResponse(saved);
         } catch (AppException ae) {
@@ -215,6 +217,7 @@ public class TutorProfileService {
 
         // Xử lý theo action
         profile.setStatus(request.getAction());
+        profile.setVerifiedAt(LocalDateTime.now());
 
         if (request.getAction() == VerificationStatus.APPROVED) {
             log.info("Admin [{}] APPROVED profile [{}] — assigning TUTOR role", adminUsername, profileId);
