@@ -27,6 +27,13 @@ public class AdminCourseController {
                 .build();
     }
 
+    @GetMapping("/{id}")
+    public ApiResponse<CourseResponse> getCourseDetail(@PathVariable String id) {
+        return ApiResponse.<CourseResponse>builder()
+                .result(courseService.getCourseDetail(id))
+                .build();
+    }
+
     @PostMapping("/{id}/verify")
     public ApiResponse<CourseResponse> verifyCourse(
             @PathVariable String id,
