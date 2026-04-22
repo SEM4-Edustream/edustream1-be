@@ -1,6 +1,7 @@
 package sem4.edustreambe.config;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -14,6 +15,7 @@ import javax.crypto.spec.SecretKeySpec;
 import java.text.ParseException;
 import java.util.Base64;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class CustomJwtDecoder implements JwtDecoder {
@@ -33,29 +35,31 @@ public class CustomJwtDecoder implements JwtDecoder {
             var claims = signedJWT.getJWTClaimsSet();
             String jwtId = claims.getJWTID();
             String issuer = claims.getIssuer();
-            
-            // Check if token is invalidated (ONLY for INTERNAL tokens)
-            boolean isInternal = issuer == null || !issuer.contains("supabase.co");
-            
-            if (isInternal && jwtId != null && invalidatedTokenRepository.existsById(jwtId)) {
-                throw new JwtException("Token has been invalidated (Logged Out)");
-            }
+
+            log.debug("JWT decode - issuer: {}, jti: {}", issuer, jwtId);
 
             // Detect if it's a Supabase token
-            if (!isInternal) {
+            boolean isSupabase = issuer != null && issuer.contains("supabase");
+
+            if (isSupabase) {
                 if (supabaseJwtSecret == null || supabaseJwtSecret.isEmpty()) {
+                    log.error("Supabase JWT secret is not configured!");
                     throw new JwtException("Supabase JWT secret not configured");
                 }
-                
-                // Supabase uses HS256 by default. 
-                // CRITICAL: Supabase JWT secrets are often just strings, but if they are 
-                // provided as Base64 in some contexts, we should be careful.
-                // However, the error 401 is usually signature mismatch.
-                SecretKeySpec secretKeySpec = new SecretKeySpec(supabaseJwtSecret.getBytes(), "HS256");
+
+                log.debug("Decoding Supabase token with HS256");
+                // Supabase JWT secrets are Base64-encoded
+                byte[] keyBytes = Base64.getDecoder().decode(supabaseJwtSecret);
+                SecretKeySpec secretKeySpec = new SecretKeySpec(keyBytes, "HmacSHA256");
                 return NimbusJwtDecoder.withSecretKey(secretKeySpec)
                         .macAlgorithm(MacAlgorithm.HS256)
                         .build()
                         .decode(token);
+            }
+
+            // Internal token: check invalidation
+            if (jwtId != null && invalidatedTokenRepository.existsById(jwtId)) {
+                throw new JwtException("Token has been invalidated (Logged Out)");
             }
 
             // Default to internal HS512 token
