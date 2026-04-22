@@ -233,6 +233,7 @@ public class CourseService {
     public List<CourseResponse> getAllCoursesForAdmin() {
         return courseRepository.findAll()
                 .stream()
+                .filter(course -> course.getStatus() != CourseStatus.DRAFT)
                 .map(courseMapper::toCourseResponse)
                 .toList();
     }
