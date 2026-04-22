@@ -19,7 +19,7 @@ public class UserCreationRequest {
 
     @NotBlank(message = "FIELD_REQUIRED")
     @jakarta.validation.constraints.Pattern(
-        regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$",
+        regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*(),.?\":{}|<>])[A-Za-z\\d!@#$%^&*(),.?\":{}|<>]{8,}$",
         message = "PASSWORD_TOO_WEAK"
     )
     String password;
