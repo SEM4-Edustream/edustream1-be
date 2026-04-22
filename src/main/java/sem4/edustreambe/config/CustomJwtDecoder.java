@@ -12,6 +12,7 @@ import sem4.edustreambe.repository.InvalidatedTokenRepository;
 
 import javax.crypto.spec.SecretKeySpec;
 import java.text.ParseException;
+import java.util.Base64;
 
 @Component
 @RequiredArgsConstructor
@@ -33,18 +34,23 @@ public class CustomJwtDecoder implements JwtDecoder {
             String jwtId = claims.getJWTID();
             String issuer = claims.getIssuer();
             
-            // Check if token is invalidated (only for internal tokens usually)
-            if (jwtId != null && invalidatedTokenRepository.existsById(jwtId)) {
+            // Check if token is invalidated (ONLY for INTERNAL tokens)
+            boolean isInternal = issuer == null || !issuer.contains("supabase.co");
+            
+            if (isInternal && jwtId != null && invalidatedTokenRepository.existsById(jwtId)) {
                 throw new JwtException("Token has been invalidated (Logged Out)");
             }
 
             // Detect if it's a Supabase token
-            if (issuer != null && issuer.contains("supabase.co")) {
+            if (!isInternal) {
                 if (supabaseJwtSecret == null || supabaseJwtSecret.isEmpty()) {
                     throw new JwtException("Supabase JWT secret not configured");
                 }
                 
-                // Supabase uses HS256 by default
+                // Supabase uses HS256 by default. 
+                // CRITICAL: Supabase JWT secrets are often just strings, but if they are 
+                // provided as Base64 in some contexts, we should be careful.
+                // However, the error 401 is usually signature mismatch.
                 SecretKeySpec secretKeySpec = new SecretKeySpec(supabaseJwtSecret.getBytes(), "HS256");
                 return NimbusJwtDecoder.withSecretKey(secretKeySpec)
                         .macAlgorithm(MacAlgorithm.HS256)

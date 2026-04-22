@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import sem4.edustreambe.constant.PredefinedRole;
 import sem4.edustreambe.dto.user.request.UserCreationRequest;
 import sem4.edustreambe.dto.user.request.UserUpdateRequest;
+import sem4.edustreambe.dto.user.response.SyncUserResponse;
 import sem4.edustreambe.dto.user.response.UserResponse;
 import sem4.edustreambe.entity.Role;
 import sem4.edustreambe.entity.User;
@@ -58,11 +59,14 @@ public class UserService {
         return userMapper.toUserResponse(user);
     }
 
-    public UserResponse syncUserFromSocial(String email, String fullName, String avatarUrl) {
+    public SyncUserResponse syncUserFromSocial(String email, String fullName, String avatarUrl) {
         log.info("Syncing social user: {}", email);
+
+        final boolean[] isNewUser = {false};
 
         User user = userRepository.findByEmail(email).orElseGet(() -> {
             log.info("Creating new social user for email: {}", email);
+            isNewUser[0] = true;
             
             // Create a unique username from email
             String username = email.split("@")[0];
@@ -88,7 +92,12 @@ public class UserService {
         if (fullName != null) user.setFullName(fullName);
         if (avatarUrl != null) user.setAvatarUrl(avatarUrl);
 
-        return userMapper.toUserResponse(userRepository.save(user));
+        User savedUser = userRepository.save(user);
+        
+        return SyncUserResponse.builder()
+                .user(userMapper.toUserResponse(savedUser))
+                .isNewUser(isNewUser[0])
+                .build();
     }
 
 

@@ -90,12 +90,13 @@ public class AuthenticationController {
         }
         
         // Sync user
-        var userResponse = userService.syncUserFromSocial(email, name, avatarUrl);
+        var syncResponse = userService.syncUserFromSocial(email, name, avatarUrl);
         
         return ApiResponse.<AuthenticationResponse>builder()
                 .result(AuthenticationResponse.builder()
-                        .token(jwt.getTokenValue()) // Return the same token or our internal one
+                        .token(jwt.getTokenValue())
                         .authenticated(true)
+                        .isNewUser(syncResponse.isNewUser())
                         .build())
                 .build();
     }
