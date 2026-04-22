@@ -6,8 +6,13 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import sem4.edustreambe.dto.common.ApiResponse;
+import sem4.edustreambe.dto.common.PageMeta;
 import sem4.edustreambe.dto.course.response.CourseResponse;
+import sem4.edustreambe.enums.CourseStatus;
 import sem4.edustreambe.service.CourseService;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 import java.util.List;
 
