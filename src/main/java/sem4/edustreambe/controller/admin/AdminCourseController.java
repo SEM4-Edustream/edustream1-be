@@ -20,6 +20,13 @@ public class AdminCourseController {
 
     CourseService courseService;
 
+    @GetMapping
+    public ApiResponse<List<CourseResponse>> getAllCourses() {
+        return ApiResponse.<List<CourseResponse>>builder()
+                .result(courseService.getAllCoursesForAdmin())
+                .build();
+    }
+
     @GetMapping("/pending")
     public ApiResponse<List<CourseResponse>> getPendingCourses() {
         return ApiResponse.<List<CourseResponse>>builder()

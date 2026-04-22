@@ -229,6 +229,13 @@ public class CourseService {
     // ==========================================
     // ADMIN: REVIEW COURSE
     // ==========================================
+    
+    public List<CourseResponse> getAllCoursesForAdmin() {
+        return courseRepository.findAll()
+                .stream()
+                .map(courseMapper::toCourseResponse)
+                .toList();
+    }
 
     public List<CourseResponse> getPendingCourses() {
         return courseRepository.findByStatus(CourseStatus.PENDING)
