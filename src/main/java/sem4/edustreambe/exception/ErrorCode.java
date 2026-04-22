@@ -55,8 +55,11 @@ public enum ErrorCode {
 
     // VALIDATION (80xx)
     INVALID_PASSWORD(8001, "Password must be at least 8 characters", HttpStatus.BAD_REQUEST),
-    USERNAME_INVALID(8002, "Username must be at least 3 characters", HttpStatus.BAD_REQUEST),
+    USERNAME_INVALID(8002, "Username must be at least 4 characters", HttpStatus.BAD_REQUEST),
     INVALID_EMAIL(8003, "Invalid email format", HttpStatus.BAD_REQUEST),
+    PASSWORD_TOO_WEAK(8004, "Password must include uppercase, lowercase, numbers, and symbols", HttpStatus.BAD_REQUEST),
+    FIELD_REQUIRED(8005, "This field is required", HttpStatus.BAD_REQUEST),
+    USERNAME_TOO_SHORT(8006, "Username must be at least 4 characters", HttpStatus.BAD_REQUEST),
     
     // REVIEWS (70xx)
     REVIEW_ALREADY_EXISTS(7001, "You have already reviewed this course", HttpStatus.BAD_REQUEST),

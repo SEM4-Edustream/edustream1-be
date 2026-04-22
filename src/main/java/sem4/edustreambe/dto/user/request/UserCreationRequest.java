@@ -13,15 +13,18 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class UserCreationRequest {
 
-    @NotBlank(message = "USERNAME_INVALID")
-    @Size(min = 3, message = "USERNAME_INVALID")
+    @NotBlank(message = "FIELD_REQUIRED")
+    @Size(min = 4, message = "USERNAME_TOO_SHORT")
     String username;
 
-    @NotBlank(message = "INVALID_PASSWORD")
-    @Size(min = 8, message = "INVALID_PASSWORD")
+    @NotBlank(message = "FIELD_REQUIRED")
+    @jakarta.validation.constraints.Pattern(
+        regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$",
+        message = "PASSWORD_TOO_WEAK"
+    )
     String password;
 
-    @NotBlank(message = "INVALID_EMAIL")
+    @NotBlank(message = "FIELD_REQUIRED")
     @Email(message = "INVALID_EMAIL")
     String email;
 
