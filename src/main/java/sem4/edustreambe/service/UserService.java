@@ -58,6 +58,39 @@ public class UserService {
         return userMapper.toUserResponse(user);
     }
 
+    public UserResponse syncUserFromSocial(String email, String fullName, String avatarUrl) {
+        log.info("Syncing social user: {}", email);
+
+        User user = userRepository.findByEmail(email).orElseGet(() -> {
+            log.info("Creating new social user for email: {}", email);
+            
+            // Create a unique username from email
+            String username = email.split("@")[0];
+            if (userRepository.existsByUsername(username)) {
+                username = username + "_" + System.currentTimeMillis();
+            }
+
+            Role studentRole = roleRepository.findByName(PredefinedRole.STUDENT_ROLE)
+                    .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
+
+            return User.builder()
+                    .email(email)
+                    .username(username)
+                    .fullName(fullName)
+                    .avatarUrl(avatarUrl)
+                    .password(passwordEncoder.encode("")) // Empty password for social users
+                    .role(studentRole)
+                    .status(sem4.edustreambe.constant.UserStatus.ACTIVE)
+                    .build();
+        });
+
+        // Always update full name and avatar if provided
+        if (fullName != null) user.setFullName(fullName);
+        if (avatarUrl != null) user.setAvatarUrl(avatarUrl);
+
+        return userMapper.toUserResponse(userRepository.save(user));
+    }
+
 
     public UserResponse getMyInfo() {
         var context = SecurityContextHolder.getContext();

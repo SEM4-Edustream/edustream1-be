@@ -73,4 +73,30 @@ public class AuthenticationController {
                 .result(result)
                 .build();
     }
+
+    @PostMapping("/outbound/authentication")
+    public ApiResponse<AuthenticationResponse> outboundAuthenticate(@org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.oauth2.jwt.Jwt jwt) {
+        log.info("Outbound authentication for subject: {}", jwt.getSubject());
+        
+        // Extract claims from Supabase JWT
+        String email = jwt.getClaim("email");
+        String name = jwt.getClaim("name");
+        
+        // Supabase picture claim is often in user_metadata or directly
+        Object rawMetadata = jwt.getClaim("user_metadata");
+        String avatarUrl = null;
+        if (rawMetadata instanceof java.util.Map) {
+            avatarUrl = (String) ((java.util.Map<?, ?>) rawMetadata).get("avatar_url");
+        }
+        
+        // Sync user
+        var userResponse = userService.syncUserFromSocial(email, name, avatarUrl);
+        
+        return ApiResponse.<AuthenticationResponse>builder()
+                .result(AuthenticationResponse.builder()
+                        .token(jwt.getTokenValue()) // Return the same token or our internal one
+                        .authenticated(true)
+                        .build())
+                .build();
+    }
 }
