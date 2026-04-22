@@ -75,6 +75,26 @@ public class TutorCourseController {
                 .build();
     }
 
+    @PutMapping("/modules/{moduleId}/lessons/{lessonId}")
+    public ApiResponse<LessonResponse> updateLesson(
+            @PathVariable String moduleId,
+            @PathVariable String lessonId,
+            @Valid @RequestBody LessonRequest request) {
+        return ApiResponse.<LessonResponse>builder()
+                .result(courseService.updateLesson(moduleId, lessonId, request))
+                .build();
+    }
+
+    @DeleteMapping("/modules/{moduleId}/lessons/{lessonId}")
+    public ApiResponse<Void> deleteLesson(
+            @PathVariable String moduleId,
+            @PathVariable String lessonId) {
+        courseService.deleteLesson(moduleId, lessonId);
+        return ApiResponse.<Void>builder()
+                .message("Lesson deleted successfully")
+                .build();
+    }
+
     @PostMapping("/{id}/submit")
     public ApiResponse<CourseResponse> submitCourse(@PathVariable String id) {
         return ApiResponse.<CourseResponse>builder()

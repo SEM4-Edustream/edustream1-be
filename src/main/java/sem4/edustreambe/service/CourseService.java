@@ -153,6 +153,55 @@ public class CourseService {
         return courseMapper.toLessonResponse(saved);
     }
 
+    public LessonResponse updateLesson(String moduleId, String lessonId, LessonRequest request) {
+        CourseModule module = moduleRepository.findById(moduleId)
+                .orElseThrow(() -> new AppException(ErrorCode.MODULE_NOT_FOUND));
+
+        verifyCourseOwnership(module.getCourse());
+        if (module.getCourse().getStatus() == CourseStatus.PUBLISHED
+                || module.getCourse().getStatus() == CourseStatus.PENDING) {
+            throw new AppException(ErrorCode.INVALID_COURSE_STATUS);
+        }
+
+        Lesson lesson = lessonRepository.findById(lessonId)
+                .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
+
+        if (!lesson.getModule().getId().equals(moduleId)) {
+            throw new AppException(ErrorCode.LESSON_NOT_FOUND);
+        }
+
+        // Cập nhật thủ công các field
+        lesson.setTitle(request.getTitle());
+        lesson.setContent(request.getContent());
+        lesson.setType(request.getType());
+        lesson.setVideoUrl(request.getVideoUrl());
+        lesson.setDurationSeconds(request.getDurationSeconds());
+        lesson.setOrderIndex(request.getOrderIndex());
+
+        Lesson saved = lessonRepository.save(lesson);
+        return courseMapper.toLessonResponse(saved);
+    }
+
+    public void deleteLesson(String moduleId, String lessonId) {
+        CourseModule module = moduleRepository.findById(moduleId)
+                .orElseThrow(() -> new AppException(ErrorCode.MODULE_NOT_FOUND));
+
+        verifyCourseOwnership(module.getCourse());
+        if (module.getCourse().getStatus() == CourseStatus.PUBLISHED
+                || module.getCourse().getStatus() == CourseStatus.PENDING) {
+            throw new AppException(ErrorCode.INVALID_COURSE_STATUS);
+        }
+
+        Lesson lesson = lessonRepository.findById(lessonId)
+                .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
+
+        if (!lesson.getModule().getId().equals(moduleId)) {
+            throw new AppException(ErrorCode.LESSON_NOT_FOUND);
+        }
+
+        lessonRepository.delete(lesson);
+    }
+
     // ==========================================
     // TUTOR: SUBMIT COURSE
     // ==========================================
