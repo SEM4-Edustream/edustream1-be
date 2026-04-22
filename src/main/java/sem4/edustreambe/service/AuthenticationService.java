@@ -168,7 +168,7 @@ public class AuthenticationService {
         }
     }
 
-    private String generateToken(User user) {
+    public String generateToken(User user) {
         log.debug("Generating token for subject: {}", user.getUsername());
 
         JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);

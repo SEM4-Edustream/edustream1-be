@@ -2,6 +2,7 @@ package sem4.edustreambe.dto.user.response;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import sem4.edustreambe.entity.User;
 
 @Data
 @Builder
@@ -9,6 +10,7 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class SyncUserResponse {
-    UserResponse user;
+    UserResponse userResponse;
+    User userEntity; // Needed to generate internal JWT
     boolean isNewUser;
 }

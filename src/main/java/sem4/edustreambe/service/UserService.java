@@ -95,7 +95,8 @@ public class UserService {
         User savedUser = userRepository.save(user);
         
         return SyncUserResponse.builder()
-                .user(userMapper.toUserResponse(savedUser))
+                .userResponse(userMapper.toUserResponse(savedUser))
+                .userEntity(savedUser)
                 .isNewUser(isNewUser[0])
                 .build();
     }
