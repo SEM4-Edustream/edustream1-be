@@ -59,4 +59,19 @@ public class Course extends BaseEntity {
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("orderIndex ASC")
     List<CourseModule> modules;
+
+    @ElementCollection
+    @CollectionTable(name = "course_learning_objectives", joinColumns = @JoinColumn(name = "course_id"))
+    @Column(name = "objective")
+    List<String> learningObjectives;
+
+    @ElementCollection
+    @CollectionTable(name = "course_prerequisites", joinColumns = @JoinColumn(name = "course_id"))
+    @Column(name = "prerequisite")
+    List<String> prerequisites;
+
+    @ElementCollection
+    @CollectionTable(name = "course_target_audiences", joinColumns = @JoinColumn(name = "course_id"))
+    @Column(name = "audience")
+    List<String> targetAudiences;
 }

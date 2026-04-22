@@ -25,4 +25,7 @@ public class CourseResponse {
     Integer reviewCount;
     CategoryResponse category;
     List<CourseModuleResponse> modules;
+    List<String> learningObjectives;
+    List<String> prerequisites;
+    List<String> targetAudiences;
 }
