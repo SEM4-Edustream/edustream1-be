@@ -21,9 +21,25 @@ public class AdminCourseController {
     CourseService courseService;
 
     @GetMapping
-    public ApiResponse<List<CourseResponse>> getAllCourses() {
-        return ApiResponse.<List<CourseResponse>>builder()
-                .result(courseService.getAllCoursesForAdmin())
+    public ApiResponse<PageMeta<CourseResponse>> getAllCourses(
+            @RequestParam(required = false) CourseStatus status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(defaultValue = "createdAt,desc") String sort) {
+        
+        String[] sortParams = sort.split(",");
+        org.springframework.data.domain.Sort sortObj = org.springframework.data.domain.Sort.by(
+                sortParams[1].equalsIgnoreCase("desc") ? 
+                        org.springframework.data.domain.Sort.Direction.DESC : 
+                        org.springframework.data.domain.Sort.Direction.ASC, 
+                sortParams[0]
+        );
+        
+        org.springframework.data.domain.Pageable pageable = 
+                org.springframework.data.domain.PageRequest.of(page, size, sortObj);
+                
+        return ApiResponse.<PageMeta<CourseResponse>>builder()
+                .result(courseService.getAllCoursesForAdmin(status, pageable))
                 .build();
     }
 

@@ -19,4 +19,7 @@ public interface CourseRepository extends JpaRepository<Course, String> {
     // Dành cho Public Search & Pagination
     org.springframework.data.domain.Page<Course> findByStatus(CourseStatus status, org.springframework.data.domain.Pageable pageable);
     org.springframework.data.domain.Page<Course> findByStatusAndTitleContainingIgnoreCase(CourseStatus status, String title, org.springframework.data.domain.Pageable pageable);
+
+    // Dành cho Admin: Hiện tất cả trừ DRAFT
+    org.springframework.data.domain.Page<Course> findByStatusNot(CourseStatus status, org.springframework.data.domain.Pageable pageable);
 }

@@ -230,12 +230,28 @@ public class CourseService {
     // ADMIN: REVIEW COURSE
     // ==========================================
     
-    public List<CourseResponse> getAllCoursesForAdmin() {
-        return courseRepository.findAll()
+    public PageMeta<CourseResponse> getAllCoursesForAdmin(CourseStatus status, Pageable pageable) {
+        Page<Course> coursePage;
+        
+        if (status != null) {
+            coursePage = courseRepository.findByStatus(status, pageable);
+        } else {
+            // Hiển thị tất cả trừ DRAFT
+            coursePage = courseRepository.findByStatusNot(CourseStatus.DRAFT, pageable);
+        }
+
+        List<CourseResponse> content = coursePage.getContent()
                 .stream()
-                .filter(course -> course.getStatus() != CourseStatus.DRAFT)
                 .map(courseMapper::toCourseResponse)
                 .toList();
+
+        return PageMeta.<CourseResponse>builder()
+                .content(content)
+                .pageSize(coursePage.getSize())
+                .pageNumber(coursePage.getNumber())
+                .totalElements(coursePage.getTotalElements())
+                .totalPages(coursePage.getTotalPages())
+                .build();
     }
 
     public List<CourseResponse> getPendingCourses() {
