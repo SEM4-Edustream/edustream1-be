@@ -24,6 +24,9 @@ public class S3Config {
     @Value("${aws.s3.region}")
     String region;
 
+    @Value("${aws.s3.endpoint:}")
+    String s3Endpoint;
+
     @Bean
     public S3Client s3Client() {
         if ("dummy-access".equals(accessKey) || accessKey == null || accessKey.trim().isEmpty()) {
@@ -32,10 +35,15 @@ public class S3Config {
 
         AwsBasicCredentials credentials = AwsBasicCredentials.create(accessKey, secretKey);
 
-        return S3Client.builder()
+        var builder = S3Client.builder()
                 .region(Region.of(region))
-                .credentialsProvider(StaticCredentialsProvider.create(credentials))
-                .build();
+                .credentialsProvider(StaticCredentialsProvider.create(credentials));
+
+        if (s3Endpoint != null && !s3Endpoint.trim().isEmpty()) {
+            builder.endpointOverride(java.net.URI.create(s3Endpoint));
+        }
+
+        return builder.build();
     }
 
     @Bean
@@ -46,9 +54,14 @@ public class S3Config {
         
         AwsBasicCredentials credentials = AwsBasicCredentials.create(accessKey, secretKey);
         
-        return S3Presigner.builder()
+        var builder = S3Presigner.builder()
                 .region(Region.of(region))
-                .credentialsProvider(StaticCredentialsProvider.create(credentials))
-                .build();
+                .credentialsProvider(StaticCredentialsProvider.create(credentials));
+
+        if (s3Endpoint != null && !s3Endpoint.trim().isEmpty()) {
+            builder.endpointOverride(java.net.URI.create(s3Endpoint));
+        }
+
+        return builder.build();
     }
 }
