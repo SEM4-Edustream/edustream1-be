@@ -49,6 +49,7 @@ payos:
 aws:
   s3:
     region: ${AWS_S3_REGION:ap-southeast-1}
+    endpoint: ${AWS_S3_ENDPOINT:}
     bucket: ${AWS_S3_BUCKET:dummy-bucket}
     document-bucket: ${AWS_S3_DOCUMENT_BUCKET:dummy-doc-bucket}
     access-key: ${AWS_ACCESS_KEY:dummy-access}
