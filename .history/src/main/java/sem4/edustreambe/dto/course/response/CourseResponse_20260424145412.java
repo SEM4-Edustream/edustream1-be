@@ -21,7 +21,6 @@ public class CourseResponse {
     String description;
     String thumbnailUrl;
     BigDecimal price;
-    CourseLevel level;
     CourseStatus status;
     Float averageRating;
     Integer reviewCount;

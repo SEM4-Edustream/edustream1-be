@@ -1,20 +1,21 @@
 package sem4.edustreambe.dto.course.request;
 
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import sem4.edustreambe.enums.CourseLevel;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class CourseUpdateRequest {
+public class CourseCreationRequest {
 
+    @NotBlank(message = "Title is required")
     String title;
 
     String description;
@@ -25,12 +26,4 @@ public class CourseUpdateRequest {
     BigDecimal price;
 
     String categoryId;
-
-    CourseLevel level;
-
-    List<String> learningObjectives;
-
-    List<String> prerequisites;
-
-    List<String> targetAudiences;
 }

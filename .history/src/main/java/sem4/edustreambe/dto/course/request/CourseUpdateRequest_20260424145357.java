@@ -1,8 +1,8 @@
-package sem4.edustreambe.dto.course.response;
+package sem4.edustreambe.dto.course.request;
 
+import jakarta.validation.constraints.DecimalMin;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import sem4.edustreambe.enums.CourseStatus;
 import sem4.edustreambe.enums.CourseLevel;
 
 import java.math.BigDecimal;
@@ -13,21 +13,22 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class CourseResponse {
-    String id;
-    String tutorProfileId;
-    String tutorName;
+public class CourseUpdateRequest {
+
     String title;
+
     String description;
+
     String thumbnailUrl;
+
+    @DecimalMin(value = "0.0", inclusive = true, message = "Price cannot be negative")
     BigDecimal price;
-    CourseLevel level;
-    CourseStatus status;
-    Float averageRating;
-    Integer reviewCount;
-    CategoryResponse category;
-    List<CourseModuleResponse> modules;
+
+    String categoryId;
+
     List<String> learningObjectives;
+
     List<String> prerequisites;
+
     List<String> targetAudiences;
 }

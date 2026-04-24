@@ -41,10 +41,6 @@ public class Course extends BaseEntity {
     BigDecimal price;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = true)
-    CourseLevel level;
-
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
     CourseStatus status = CourseStatus.DRAFT;
