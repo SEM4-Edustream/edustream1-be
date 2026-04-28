@@ -42,3 +42,5 @@ mvnw.cmd
 logs/
 .secrets
 data/
+
+.history/
