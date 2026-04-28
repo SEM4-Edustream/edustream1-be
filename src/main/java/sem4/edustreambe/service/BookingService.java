@@ -20,7 +20,9 @@ import sem4.edustreambe.mapper.BookingMapper;
 import sem4.edustreambe.repository.BookingRepository;
 import sem4.edustreambe.repository.CourseRepository;
 import sem4.edustreambe.repository.EnrollmentRepository;
+import sem4.edustreambe.repository.PaymentTransactionRepository;
 import sem4.edustreambe.repository.UserRepository;
+import sem4.edustreambe.entity.PaymentTransaction;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -37,6 +39,7 @@ public class BookingService {
     CourseRepository courseRepository;
     BookingRepository bookingRepository;
     EnrollmentRepository enrollmentRepository;
+    PaymentTransactionRepository paymentTransactionRepository;
     BookingMapper bookingMapper;
 
     private User getCurrentUser() {
@@ -97,5 +100,24 @@ public class BookingService {
         return bookingRepository.findByUserId(student.getId()).stream()
                 .map(bookingMapper::toBookingResponse)
                 .toList();
+    }
+
+    public void deleteBooking(String bookingId) {
+        User student = getCurrentUser();
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new AppException(ErrorCode.BOOKING_NOT_FOUND));
+
+        if (!booking.getUser().getId().equals(student.getId())) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+
+        if (booking.getStatus() == BookingStatus.PAID) {
+            throw new AppException(ErrorCode.PAYMENT_ALREADY_PROCESSED);
+        }
+
+        Optional<PaymentTransaction> tx = paymentTransactionRepository.findByBookingId(bookingId);
+        tx.ifPresent(paymentTransactionRepository::delete);
+
+        bookingRepository.delete(booking);
     }
 }

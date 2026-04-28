@@ -35,4 +35,10 @@ public class StudentBookingController {
                 .result(bookingService.getMyBookings())
                 .build();
     }
+
+    @DeleteMapping("/{bookingId}")
+    public ApiResponse<Void> deleteBooking(@PathVariable String bookingId) {
+        bookingService.deleteBooking(bookingId);
+        return ApiResponse.<Void>builder().build();
+    }
 }
