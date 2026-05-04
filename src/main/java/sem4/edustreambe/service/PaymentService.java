@@ -85,7 +85,7 @@ public class PaymentService {
                 .price(amount)
                 .build();
 
-        String returnUrl = frontendUrl + "/payment/success";
+        String returnUrl = frontendUrl + "/payment/success?courseId=" + booking.getCourse().getId();
         String cancelUrl = frontendUrl + "/payment/cancel?courseId=" + booking.getCourse().getId() + "&bookingId=" + booking.getId();
 
         CreatePaymentLinkRequest paymentData = CreatePaymentLinkRequest.builder()

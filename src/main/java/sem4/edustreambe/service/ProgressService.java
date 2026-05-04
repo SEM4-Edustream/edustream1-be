@@ -67,4 +67,12 @@ public class ProgressService {
         }
         enrollmentRepository.save(enrollment);
     }
+
+    public java.util.List<String> getCompletedLessonIds(String courseId) {
+        User student = getCurrentUser();
+        return lessonProgressRepository.findByUserIdAndLesson_Module_CourseIdAndIsCompletedTrue(student.getId(), courseId)
+                .stream()
+                .map(p -> p.getLesson().getId())
+                .collect(java.util.stream.Collectors.toList());
+    }
 }

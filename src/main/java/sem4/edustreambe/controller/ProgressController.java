@@ -32,4 +32,13 @@ public class ProgressController {
                 .message("Đánh dấu hoàn thành bài học thành công!")
                 .build();
     }
+
+    @org.springframework.web.bind.annotation.GetMapping("/courses/{courseId}")
+    @Operation(summary = "Lấy danh sách ID các bài học đã hoàn thành của một khóa học", security = @SecurityRequirement(name = "bearerAuth"))
+    @PreAuthorize("hasAnyRole('USER', 'STUDENT')")
+    public ApiResponse<java.util.List<String>> getCourseProgress(@PathVariable String courseId) {
+        return ApiResponse.<java.util.List<String>>builder()
+                .result(progressService.getCompletedLessonIds(courseId))
+                .build();
+    }
 }
