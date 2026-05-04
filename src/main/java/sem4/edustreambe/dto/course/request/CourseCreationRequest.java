@@ -27,6 +27,7 @@ public class CourseCreationRequest {
     @DecimalMin(value = "0.0", inclusive = true, message = "Price cannot be negative")
     BigDecimal price;
 
+    @NotBlank(message = "Category is required")
     String categoryId;
 
     CourseLevel level;

@@ -1,6 +1,7 @@
 package sem4.edustreambe.dto.course.request;
 
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import sem4.edustreambe.enums.CourseLevel;
@@ -26,6 +27,7 @@ public class CourseUpdateRequest {
     @DecimalMin(value = "0.0", inclusive = true, message = "Price cannot be negative")
     BigDecimal price;
 
+    @NotBlank(message = "Category is required")
     String categoryId;
 
     CourseLevel level;
