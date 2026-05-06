@@ -24,10 +24,16 @@ import sem4.edustreambe.entity.User;
 import sem4.edustreambe.exception.AppException;
 import sem4.edustreambe.exception.ErrorCode;
 import sem4.edustreambe.repository.InvalidatedTokenRepository;
+import sem4.edustreambe.repository.PasswordResetTokenRepository;
 import sem4.edustreambe.repository.UserRepository;
+import sem4.edustreambe.entity.PasswordResetToken;
+import sem4.edustreambe.dto.auth.request.ForgotPasswordRequest;
+import sem4.edustreambe.dto.auth.request.ResetPasswordRequest;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.text.ParseException;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.StringJoiner;
@@ -42,6 +48,12 @@ public class AuthenticationService {
     UserRepository userRepository;
     InvalidatedTokenRepository invalidatedTokenRepository;
     PasswordEncoder passwordEncoder;
+    PasswordResetTokenRepository passwordResetTokenRepository;
+    EmailService emailService;
+
+    @NonFinal
+    @Value("${app.frontend.url:http://localhost:3000}")
+    protected String FRONTEND_URL;
 
     @NonFinal
     @Value("${jwt.signerKey}")
@@ -203,5 +215,42 @@ public class AuthenticationService {
             stringJoiner.add(user.getRole().getName());
         }
         return stringJoiner.toString();
+    }
+
+    @Transactional
+    public void forgotPassword(ForgotPasswordRequest request) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        passwordResetTokenRepository.deleteByUser(user);
+
+        String token = UUID.randomUUID().toString();
+        PasswordResetToken resetToken = PasswordResetToken.builder()
+                .token(token)
+                .user(user)
+                .expiryDate(LocalDateTime.now().plusMinutes(15))
+                .build();
+
+        passwordResetTokenRepository.save(resetToken);
+
+        String resetLink = FRONTEND_URL + "/en/reset-password?token=" + token;
+        emailService.sendPasswordResetEmail(user.getEmail(), user.getUsername(), resetLink);
+    }
+
+    @Transactional
+    public void resetPassword(ResetPasswordRequest request) {
+        PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(request.getToken())
+                .orElseThrow(() -> new AppException(ErrorCode.UNAUTHENTICATED));
+
+        if (resetToken.isExpired()) {
+            passwordResetTokenRepository.delete(resetToken);
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+
+        User user = resetToken.getUser();
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+
+        passwordResetTokenRepository.delete(resetToken);
     }
 }

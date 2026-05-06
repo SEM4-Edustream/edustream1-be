@@ -19,6 +19,8 @@ import sem4.edustreambe.dto.auth.response.IntrospectResponse;
 import sem4.edustreambe.dto.common.ApiResponse;
 import sem4.edustreambe.dto.user.request.UserCreationRequest;
 import sem4.edustreambe.dto.user.response.UserResponse;
+import sem4.edustreambe.dto.auth.request.ForgotPasswordRequest;
+import sem4.edustreambe.dto.auth.request.ResetPasswordRequest;
 import sem4.edustreambe.service.AuthenticationService;
 import sem4.edustreambe.service.UserService;
 
@@ -98,6 +100,22 @@ public class AuthenticationController {
                         .authenticated(true)
                         .isNewUser(syncResponse.isNewUser())
                         .build())
+                .build();
+    }
+
+    @PostMapping("/forgot-password")
+    public ApiResponse<Void> forgotPassword(@RequestBody @Valid ForgotPasswordRequest request) {
+        authenticationService.forgotPassword(request);
+        return ApiResponse.<Void>builder()
+                .message("Password reset link sent to your email.")
+                .build();
+    }
+
+    @PostMapping("/reset-password")
+    public ApiResponse<Void> resetPassword(@RequestBody @Valid ResetPasswordRequest request) {
+        authenticationService.resetPassword(request);
+        return ApiResponse.<Void>builder()
+                .message("Password has been reset successfully.")
                 .build();
     }
 }

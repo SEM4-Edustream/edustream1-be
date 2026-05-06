@@ -82,4 +82,14 @@ public class EmailService {
         );
         sendEmail(to, subject, "tutor-approval", variables);
     }
+
+    public void sendPasswordResetEmail(String to, String name, String resetLink) {
+        Locale locale = LocaleContextHolder.getLocale();
+        String subject = messageSource.getMessage("email.password_reset.subject", new Object[]{}, "Password Reset Request", locale);
+        Map<String, Object> variables = Map.of(
+                "name", name,
+                "resetLink", resetLink
+        );
+        sendEmail(to, subject, "password-reset", variables);
+    }
 }
