@@ -7,25 +7,19 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import sem4.edustreambe.dto.booking.request.BookingRequest;
+import sem4.edustreambe.dto.booking.response.BookingItemResponse;
 import sem4.edustreambe.dto.booking.response.BookingResponse;
-import sem4.edustreambe.entity.Booking;
-import sem4.edustreambe.entity.Course;
-import sem4.edustreambe.entity.Enrollment;
-import sem4.edustreambe.entity.User;
+import sem4.edustreambe.entity.*;
 import sem4.edustreambe.enums.BookingStatus;
 import sem4.edustreambe.enums.CourseStatus;
 import sem4.edustreambe.exception.AppException;
 import sem4.edustreambe.exception.ErrorCode;
 import sem4.edustreambe.mapper.BookingMapper;
-import sem4.edustreambe.repository.BookingRepository;
-import sem4.edustreambe.repository.CourseRepository;
-import sem4.edustreambe.repository.EnrollmentRepository;
-import sem4.edustreambe.repository.PaymentTransactionRepository;
-import sem4.edustreambe.repository.UserRepository;
-import sem4.edustreambe.entity.PaymentTransaction;
+import sem4.edustreambe.repository.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -40,7 +34,9 @@ public class BookingService {
     BookingRepository bookingRepository;
     EnrollmentRepository enrollmentRepository;
     PaymentTransactionRepository paymentTransactionRepository;
+    CartItemRepository cartItemRepository;
     BookingMapper bookingMapper;
+    CartService cartService;
 
     private User getCurrentUser() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -48,40 +44,48 @@ public class BookingService {
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
     }
 
+    /**
+     * Create a booking for a single course (legacy support / direct buy).
+     */
     public BookingResponse createBooking(BookingRequest request) {
         User student = getCurrentUser();
 
         Course course = courseRepository.findById(request.getCourseId())
                 .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
 
-        // 1. Validate if course is published
         if (course.getStatus() != CourseStatus.PUBLISHED) {
             throw new AppException(ErrorCode.COURSE_NOT_PUBLISHED);
         }
 
-        // 2. Check if already enrolled
         if (enrollmentRepository.existsByUserIdAndCourseId(student.getId(), course.getId())) {
             throw new AppException(ErrorCode.ALREADY_ENROLLED);
         }
 
-        // 3. Check if an active booking already exists
         Optional<Booking> existingBooking = bookingRepository.findByUserIdAndCourseIdAndStatus(
                 student.getId(), course.getId(), BookingStatus.PENDING);
         if (existingBooking.isPresent()) {
             throw new AppException(ErrorCode.BOOKING_ALREADY_EXISTS);
         }
 
+        BigDecimal totalAmount = course.getPrice() != null ? course.getPrice() : BigDecimal.ZERO;
+
         Booking booking = Booking.builder()
                 .user(student)
-                .course(course)
-                .amount(course.getPrice())
+                .amount(totalAmount)
                 .status(BookingStatus.PENDING)
+                .items(new ArrayList<>())
                 .build();
 
-        // 4. Auto-enrollment for free courses ($0 or null)
-        if (course.getPrice() == null || course.getPrice().compareTo(BigDecimal.ZERO) == 0) {
+        BookingItem bookingItem = BookingItem.builder()
+                .booking(booking)
+                .course(course)
+                .price(totalAmount)
+                .build();
+        booking.getItems().add(bookingItem);
+
+        // Auto-enrollment for free courses
+        if (totalAmount.compareTo(BigDecimal.ZERO) == 0) {
             booking.setStatus(BookingStatus.PAID);
-            
             Enrollment enrollment = Enrollment.builder()
                     .user(student)
                     .course(course)
@@ -92,13 +96,82 @@ public class BookingService {
         }
 
         Booking saved = bookingRepository.save(booking);
-        return bookingMapper.toBookingResponse(saved);
+        return toBookingResponse(saved);
+    }
+
+    /**
+     * Create a booking from the user's entire cart (multi-course checkout).
+     */
+    public BookingResponse createBookingFromCart() {
+        User student = getCurrentUser();
+
+        List<CartItem> cartItems = cartItemRepository.findByUserId(student.getId());
+        if (cartItems.isEmpty()) {
+            throw new AppException(ErrorCode.CART_EMPTY);
+        }
+
+        BigDecimal totalAmount = BigDecimal.ZERO;
+        List<BookingItem> bookingItems = new ArrayList<>();
+
+        Booking booking = Booking.builder()
+                .user(student)
+                .status(BookingStatus.PENDING)
+                .items(new ArrayList<>())
+                .build();
+
+        for (CartItem cartItem : cartItems) {
+            Course course = cartItem.getCourse();
+
+            if (course.getStatus() != CourseStatus.PUBLISHED) continue;
+
+            if (enrollmentRepository.existsByUserIdAndCourseId(student.getId(), course.getId())) continue;
+
+            BigDecimal price = course.getPrice() != null ? course.getPrice() : BigDecimal.ZERO;
+            totalAmount = totalAmount.add(price);
+
+            BookingItem bookingItem = BookingItem.builder()
+                    .booking(booking)
+                    .course(course)
+                    .price(price)
+                    .build();
+            bookingItems.add(bookingItem);
+        }
+
+        if (bookingItems.isEmpty()) {
+            throw new AppException(ErrorCode.CART_EMPTY);
+        }
+
+        booking.setAmount(totalAmount);
+        booking.setItems(bookingItems);
+
+        // Auto-enrollment for all-free carts
+        if (totalAmount.compareTo(BigDecimal.ZERO) == 0) {
+            booking.setStatus(BookingStatus.PAID);
+            for (BookingItem item : bookingItems) {
+                if (!enrollmentRepository.existsByUserIdAndCourseId(student.getId(), item.getCourse().getId())) {
+                    Enrollment enrollment = Enrollment.builder()
+                            .user(student)
+                            .course(item.getCourse())
+                            .enrolledAt(LocalDateTime.now())
+                            .progressPercentage(0)
+                            .build();
+                    enrollmentRepository.save(enrollment);
+                }
+            }
+        }
+
+        Booking saved = bookingRepository.save(booking);
+
+        // Clear the cart after successful booking
+        cartService.clearCart(student);
+
+        return toBookingResponse(saved);
     }
 
     public List<BookingResponse> getMyBookings() {
         User student = getCurrentUser();
         return bookingRepository.findByUserId(student.getId()).stream()
-                .map(bookingMapper::toBookingResponse)
+                .map(this::toBookingResponse)
                 .toList();
     }
 
@@ -119,5 +192,27 @@ public class BookingService {
         tx.ifPresent(paymentTransactionRepository::delete);
 
         bookingRepository.delete(booking);
+    }
+
+    private BookingResponse toBookingResponse(Booking booking) {
+        List<BookingItemResponse> itemResponses = booking.getItems() != null
+                ? booking.getItems().stream()
+                    .map(item -> BookingItemResponse.builder()
+                            .id(item.getId())
+                            .courseId(item.getCourse().getId())
+                            .courseTitle(item.getCourse().getTitle())
+                            .courseThumbnail(item.getCourse().getThumbnailUrl())
+                            .price(item.getPrice())
+                            .build())
+                    .toList()
+                : List.of();
+
+        return BookingResponse.builder()
+                .id(booking.getId())
+                .items(itemResponses)
+                .status(booking.getStatus())
+                .amount(booking.getAmount())
+                .createdAt(booking.getCreatedAt())
+                .build();
     }
 }

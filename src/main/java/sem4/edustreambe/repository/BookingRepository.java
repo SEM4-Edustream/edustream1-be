@@ -14,5 +14,6 @@ import java.util.UUID;
 public interface BookingRepository extends JpaRepository<Booking, String> {
     List<Booking> findByUserId(UUID userId);
 
-    Optional<Booking> findByUserIdAndCourseIdAndStatus(UUID userId, String courseId, BookingStatus status);
+    @org.springframework.data.jpa.repository.Query("SELECT b FROM Booking b JOIN b.items i WHERE b.user.id = :userId AND i.course.id = :courseId AND b.status = :status")
+    Optional<Booking> findByUserIdAndCourseIdAndStatus(@org.springframework.data.repository.query.Param("userId") UUID userId, @org.springframework.data.repository.query.Param("courseId") String courseId, @org.springframework.data.repository.query.Param("status") BookingStatus status);
 }

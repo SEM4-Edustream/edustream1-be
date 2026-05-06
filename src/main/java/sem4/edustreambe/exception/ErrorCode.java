@@ -65,7 +65,14 @@ public enum ErrorCode {
     REVIEW_ALREADY_EXISTS(7001, "You have already reviewed this course", HttpStatus.BAD_REQUEST),
     MUST_ENROLL_TO_REVIEW(7002, "You must enroll in this course to leave a review", HttpStatus.FORBIDDEN),
     INVALID_RATING(7003, "Rating must be between 1 and 5", HttpStatus.BAD_REQUEST),
-    INVALID_COMMENT(7004, "Comment cannot be empty", HttpStatus.BAD_REQUEST)
+    INVALID_COMMENT(7004, "Comment cannot be empty", HttpStatus.BAD_REQUEST),
+
+    // CART & WISHLIST (90xx)
+    ALREADY_IN_CART(9001, "This course is already in your cart", HttpStatus.BAD_REQUEST),
+    CART_ITEM_NOT_FOUND(9002, "Cart item not found", HttpStatus.NOT_FOUND),
+    CART_EMPTY(9003, "Your cart is empty", HttpStatus.BAD_REQUEST),
+    ALREADY_IN_WISHLIST(9004, "This course is already in your wishlist", HttpStatus.BAD_REQUEST),
+    WISHLIST_ITEM_NOT_FOUND(9005, "Wishlist item not found", HttpStatus.NOT_FOUND)
     ;
 
     int code;

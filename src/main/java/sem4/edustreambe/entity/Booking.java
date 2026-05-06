@@ -7,6 +7,7 @@ import lombok.experimental.SuperBuilder;
 import sem4.edustreambe.enums.BookingStatus;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Entity
 @Table(name = "bookings")
@@ -26,9 +27,8 @@ public class Booking extends BaseEntity {
     @JoinColumn(name = "user_id", nullable = false)
     User user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "course_id", nullable = false)
-    Course course;
+    @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, orphanRemoval = true)
+    List<BookingItem> items;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

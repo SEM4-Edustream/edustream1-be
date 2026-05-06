@@ -2,21 +2,18 @@ package sem4.edustreambe.dto.booking.response;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import sem4.edustreambe.enums.BookingStatus;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.List;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class BookingResponse {
+public class BookingItemResponse {
     String id;
-    List<BookingItemResponse> items;
-    BookingStatus status;
-    BigDecimal amount;
-    LocalDateTime createdAt;
+    String courseId;
+    String courseTitle;
+    String courseThumbnail;
+    BigDecimal price;
 }

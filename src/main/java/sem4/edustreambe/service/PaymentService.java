@@ -8,10 +8,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import sem4.edustreambe.dto.payment.response.PaymentLinkResponse;
-import sem4.edustreambe.entity.Booking;
-import sem4.edustreambe.entity.Enrollment;
-import sem4.edustreambe.entity.PaymentTransaction;
-import sem4.edustreambe.entity.User;
+import sem4.edustreambe.entity.*;
 import sem4.edustreambe.enums.BookingStatus;
 import sem4.edustreambe.enums.TransactionStatus;
 import sem4.edustreambe.exception.AppException;
@@ -24,10 +21,9 @@ import vn.payos.PayOS;
 import vn.payos.model.v2.paymentRequests.CreatePaymentLinkRequest;
 import vn.payos.model.v2.paymentRequests.CreatePaymentLinkResponse;
 import vn.payos.model.v2.paymentRequests.PaymentLinkItem;
-import vn.payos.service.blocking.webhooks.WebhooksService;
 
 import java.time.LocalDateTime;
-import java.util.Map;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -79,26 +75,35 @@ public class PaymentService {
 
         Long amount = booking.getAmount().longValue();
 
-        PaymentLinkItem item = PaymentLinkItem.builder()
-                .name(booking.getCourse().getTitle())
-                .quantity(1)
-                .price(amount)
-                .build();
+        // Build line items from BookingItems
+        List<PaymentLinkItem> paymentItems = booking.getItems().stream()
+                .map(item -> PaymentLinkItem.builder()
+                        .name(item.getCourse().getTitle().length() > 50
+                                ? item.getCourse().getTitle().substring(0, 50)
+                                : item.getCourse().getTitle())
+                        .quantity(1)
+                        .price(item.getPrice().longValue())
+                        .build())
+                .toList();
 
-        String returnUrl = frontendUrl + "/payment/success?courseId=" + booking.getCourse().getId();
-        String cancelUrl = frontendUrl + "/payment/cancel?courseId=" + booking.getCourse().getId() + "&bookingId=" + booking.getId();
+        // For multi-item bookings, use the booking ID in URLs
+        String returnUrl = frontendUrl + "/payment/success?bookingId=" + booking.getId();
+        String cancelUrl = frontendUrl + "/payment/cancel?bookingId=" + booking.getId();
 
-        CreatePaymentLinkRequest paymentData = CreatePaymentLinkRequest.builder()
+        CreatePaymentLinkRequest.CreatePaymentLinkRequestBuilder requestBuilder = CreatePaymentLinkRequest.builder()
                 .orderCode(orderCode)
                 .amount(amount)
                 .description("EduStream Course")
                 .returnUrl(returnUrl)
-                .cancelUrl(cancelUrl)
-                .item(item)
-                .build();
+                .cancelUrl(cancelUrl);
+
+        // Add items
+        for (PaymentLinkItem item : paymentItems) {
+            requestBuilder.item(item);
+        }
 
         try {
-            CreatePaymentLinkResponse data = payOS.paymentRequests().create(paymentData);
+            CreatePaymentLinkResponse data = payOS.paymentRequests().create(requestBuilder.build());
 
             PaymentTransaction tx = PaymentTransaction.builder()
                     .booking(booking)
@@ -179,18 +184,20 @@ public class PaymentService {
             booking.setStatus(BookingStatus.PAID);
             bookingRepository.save(booking);
 
-            // Create Enrollment
-            if (!enrollmentRepository.existsByUserIdAndCourseId(booking.getUser().getId(),
-                    booking.getCourse().getId())) {
-                Enrollment enrollment = Enrollment.builder()
-                        .user(booking.getUser())
-                        .course(booking.getCourse())
-                        .enrolledAt(LocalDateTime.now())
-                        .progressPercentage(0)
-                        .build();
-                enrollmentRepository.save(enrollment);
-                log.info("Auto-enrolled user {} to course {} upon successful PayOS payment.",
-                        booking.getUser().getUsername(), booking.getCourse().getTitle());
+            // Create Enrollment for ALL courses in the booking
+            for (BookingItem item : booking.getItems()) {
+                Course course = item.getCourse();
+                if (!enrollmentRepository.existsByUserIdAndCourseId(booking.getUser().getId(), course.getId())) {
+                    Enrollment enrollment = Enrollment.builder()
+                            .user(booking.getUser())
+                            .course(course)
+                            .enrolledAt(LocalDateTime.now())
+                            .progressPercentage(0)
+                            .build();
+                    enrollmentRepository.save(enrollment);
+                    log.info("Auto-enrolled user {} to course {} upon successful PayOS payment.",
+                            booking.getUser().getUsername(), course.getTitle());
+                }
             }
 
             response.put("error", 0);

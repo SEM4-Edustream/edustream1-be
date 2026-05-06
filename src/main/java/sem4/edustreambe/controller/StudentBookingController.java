@@ -29,6 +29,13 @@ public class StudentBookingController {
                 .build();
     }
 
+    @PostMapping("/checkout-cart")
+    public ApiResponse<BookingResponse> checkoutCart() {
+        return ApiResponse.<BookingResponse>builder()
+                .result(bookingService.createBookingFromCart())
+                .build();
+    }
+
     @GetMapping("/my-bookings")
     public ApiResponse<List<BookingResponse>> getMyBookings() {
         return ApiResponse.<List<BookingResponse>>builder()
