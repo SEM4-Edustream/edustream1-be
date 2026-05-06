@@ -37,6 +37,7 @@ public class PaymentService {
     BookingRepository bookingRepository;
     PaymentTransactionRepository transactionRepository;
     EnrollmentRepository enrollmentRepository;
+    EmailService emailService;
 
     @org.springframework.beans.factory.annotation.Value("${app.frontend.url:http://localhost:3000}")
     @lombok.experimental.NonFinal
@@ -198,6 +199,21 @@ public class PaymentService {
                     log.info("Auto-enrolled user {} to course {} upon successful PayOS payment.",
                             booking.getUser().getUsername(), course.getTitle());
                 }
+            }
+
+            // Send order confirmation email
+            try {
+                List<String> courseTitles = booking.getItems().stream()
+                        .map(item -> item.getCourse().getTitle())
+                        .toList();
+                emailService.sendOrderConfirmation(
+                        booking.getUser().getEmail(),
+                        booking.getUser().getFullName() != null ? booking.getUser().getFullName() : booking.getUser().getUsername(),
+                        courseTitles,
+                        booking.getAmount().doubleValue()
+                );
+            } catch (Exception e) {
+                log.error("Failed to send order confirmation email for booking {}", booking.getId(), e);
             }
 
             response.put("error", 0);

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Application Approved</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px; }
+        .header { text-align: center; padding-bottom: 20px; border-bottom: 2px solid #3498db; }
+        .content { padding: 20px 0; }
+        .footer { text-align: center; font-size: 12px; color: #777; border-top: 1px solid #eee; padding-top: 20px; }
+        .button { display: inline-block; padding: 12px 24px; background-color: #3498db; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 style="color: #1c1d1f;">Congratulations!</h1>
+        </div>
+        <div class="content">
+            <p>Hi <span th:text="${name}">User</span>,</p>
+            <p>We are excited to inform you that your application to become a Tutor on EduStream has been <strong>Approved</strong>!</p>
+            <p>You can now access your Tutor Dashboard to start creating courses and sharing your knowledge with students around the world.</p>
+            <div style="text-align: center; margin: 30px 0;">
+                <a th:href="${dashboardUrl}" class="button">Go to Tutor Dashboard</a>
+            </div>
+            <p>We're looking forward to seeing the amazing content you'll create.</p>
+            <p>Best regards,<br>The EduStream Team</p>
+        </div>
+        <div class="footer">
+            &copy; 2026 EduStream. All rights reserved.
+        </div>
+    </div>
+</body>
+</html>

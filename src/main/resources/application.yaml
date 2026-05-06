@@ -35,6 +35,17 @@ spring:
               LOG_QUERIES_SLOWER_THAN_MS: 1000
   messages:
     encoding: UTF-8
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
 jwt:
   signerKey: ${JWT_SIGNER_KEY}

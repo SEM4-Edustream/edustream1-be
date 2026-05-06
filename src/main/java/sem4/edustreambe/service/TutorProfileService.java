@@ -44,6 +44,7 @@ public class TutorProfileService {
     UserRepository userRepository;
     RoleRepository roleRepository;
     TutorMapper tutorMapper;
+    EmailService emailService;
 
 
     private User getCurrentUser() {
@@ -229,6 +230,16 @@ public class TutorProfileService {
             User profileOwner = profile.getUser();
             profileOwner.setRole(tutorRole);
             userRepository.save(profileOwner);
+
+            // Send approval email
+            try {
+                emailService.sendTutorApprovalEmail(
+                        profileOwner.getEmail(),
+                        profileOwner.getFullName() != null ? profileOwner.getFullName() : profileOwner.getUsername()
+                );
+            } catch (Exception e) {
+                log.error("Failed to send tutor approval email to {}", profileOwner.getEmail(), e);
+            }
 
         } else {
             log.info("Admin [{}] REJECTED profile [{}] with comment: [{}]",

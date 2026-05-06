@@ -33,6 +33,7 @@ public class UserService {
     PasswordEncoder passwordEncoder;
     UserMapper userMapper;
     FileService fileService;
+    EmailService emailService;
 
     public UserResponse createUser(UserCreationRequest request) {
         log.info("Creating new user with username: {}", request.getUsername());
@@ -55,6 +56,13 @@ public class UserService {
 
         user = userRepository.save(user);
         log.info("User created successfully with id: {}", user.getId());
+
+        // Send welcome email
+        try {
+            emailService.sendWelcomeEmail(user.getEmail(), user.getFullName() != null ? user.getFullName() : user.getUsername());
+        } catch (Exception e) {
+            log.error("Failed to send welcome email to {}", user.getEmail(), e);
+        }
 
         return userMapper.toUserResponse(user);
     }
@@ -94,6 +102,14 @@ public class UserService {
 
         User savedUser = userRepository.save(user);
         
+        if (isNewUser[0]) {
+            try {
+                emailService.sendWelcomeEmail(savedUser.getEmail(), savedUser.getFullName());
+            } catch (Exception e) {
+                log.error("Failed to send welcome email to social user {}", savedUser.getEmail(), e);
+            }
+        }
+
         return SyncUserResponse.builder()
                 .userResponse(userMapper.toUserResponse(savedUser))
                 .userEntity(savedUser)
