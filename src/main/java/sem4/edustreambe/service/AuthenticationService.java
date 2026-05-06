@@ -69,15 +69,15 @@ public class AuthenticationService {
     }
 
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
-        log.info("Attempting login for user: {}", request.getUsername());
+        log.info("Attempting login for identifier: {}", request.getUsername());
 
-        var user = userRepository.findByUsername(request.getUsername())
+        var user = userRepository.findByUsernameOrEmail(request.getUsername())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         boolean authenticated = passwordEncoder.matches(request.getPassword(), user.getPassword());
 
         if (!authenticated) {
-            log.warn("Login failed: Incorrect password for user {}", request.getUsername());
+            log.warn("Login failed: Incorrect password for identifier {}", request.getUsername());
             throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
 
