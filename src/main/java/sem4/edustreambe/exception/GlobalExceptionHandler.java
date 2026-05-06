@@ -7,28 +7,40 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import sem4.edustreambe.dto.common.ApiResponse;
 
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.beans.factory.annotation.Autowired;
+
 @ControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
 
+    @Autowired
+    private MessageSource messageSource;
+
     @ExceptionHandler(value = Exception.class)
     ResponseEntity<ApiResponse<?>> handlingRuntimeException(Exception exception) {
         log.error("Unhandled Exception: ", exception);
-        return ResponseEntity.status(ErrorCode.UNCATEGORIZED_EXCEPTION.getStatusCode())
+        ErrorCode errorCode = ErrorCode.UNCATEGORIZED_EXCEPTION;
+        String message = messageSource.getMessage(errorCode.getMessageKey(), null, LocaleContextHolder.getLocale());
+        
+        return ResponseEntity.status(errorCode.getStatusCode())
                 .body(ApiResponse.builder()
-                        .code(ErrorCode.UNCATEGORIZED_EXCEPTION.getCode())
-                        .message(ErrorCode.UNCATEGORIZED_EXCEPTION.getMessage() + " | CHI TIẾT LỖI: " + exception.getMessage())
+                        .code(errorCode.getCode())
+                        .message(message + " | DETAIL: " + exception.getMessage())
                         .build());
     }
 
     @ExceptionHandler(value = org.springframework.security.access.AccessDeniedException.class)
     ResponseEntity<ApiResponse<?>> handlingAccessDeniedException(org.springframework.security.access.AccessDeniedException exception) {
         ErrorCode errorCode = ErrorCode.UNAUTHORIZED;
+        String message = messageSource.getMessage(errorCode.getMessageKey(), null, LocaleContextHolder.getLocale());
+        
         log.warn("Access Denied: {}", exception.getMessage());
         return ResponseEntity.status(errorCode.getStatusCode())
                 .body(ApiResponse.builder()
                         .code(errorCode.getCode())
-                        .message(errorCode.getMessage())
+                        .message(message)
                         .build());
     }
 
@@ -49,20 +61,24 @@ public class GlobalExceptionHandler {
             errorCode = ErrorCode.INVALID_KEY;
         }
 
+        String message = messageSource.getMessage(errorCode.getMessageKey(), null, LocaleContextHolder.getLocale());
+
         return ResponseEntity.status(errorCode.getStatusCode())
                 .body(ApiResponse.builder()
                         .code(errorCode.getCode())
-                        .message(errorCode.getMessage())
+                        .message(message)
                         .build());
     }
 
     @ExceptionHandler(value = AppException.class)
     ResponseEntity<ApiResponse<?>> handlingAppException(AppException exception) {
         ErrorCode errorCode = exception.getErrorCode();
+        String message = messageSource.getMessage(errorCode.getMessageKey(), null, LocaleContextHolder.getLocale());
+        
         return ResponseEntity.status(errorCode.getStatusCode())
                 .body(ApiResponse.builder()
                         .code(errorCode.getCode())
-                        .message(errorCode.getMessage())
+                        .message(message)
                         .build());
     }
 }

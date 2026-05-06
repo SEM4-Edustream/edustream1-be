@@ -15,6 +15,10 @@ import org.thymeleaf.context.Context;
 
 import java.util.Map;
 import java.util.List;
+import java.util.Locale;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +28,7 @@ public class EmailService {
 
     JavaMailSender mailSender;
     TemplateEngine templateEngine;
+    MessageSource messageSource;
 
     @Async
     public void sendEmail(String to, String subject, String templateName, Map<String, Object> variables) {
@@ -48,27 +53,33 @@ public class EmailService {
     }
 
     public void sendWelcomeEmail(String to, String name) {
+        Locale locale = LocaleContextHolder.getLocale();
+        String subject = messageSource.getMessage("email.welcome.subject", null, locale);
         Map<String, Object> variables = Map.of(
                 "name", name,
                 "loginUrl", "https://edu-stream.dev/login"
         );
-        sendEmail(to, "Welcome to EduStream!", "welcome-email", variables);
+        sendEmail(to, subject, "welcome-email", variables);
     }
 
     public void sendOrderConfirmation(String to, String name, List<String> courseTitles, double totalAmount) {
+        Locale locale = LocaleContextHolder.getLocale();
+        String subject = messageSource.getMessage("email.order.subject", null, locale);
         Map<String, Object> variables = Map.of(
                 "name", name,
                 "courses", courseTitles,
                 "totalAmount", totalAmount
         );
-        sendEmail(to, "Purchase Confirmation - EduStream", "order-confirmation", variables);
+        sendEmail(to, subject, "order-confirmation", variables);
     }
 
     public void sendTutorApprovalEmail(String to, String name) {
+        Locale locale = LocaleContextHolder.getLocale();
+        String subject = messageSource.getMessage("email.tutor_approval.subject", null, locale);
         Map<String, Object> variables = Map.of(
                 "name", name,
                 "dashboardUrl", "https://edu-stream.dev/tutor/dashboard"
         );
-        sendEmail(to, "Congratulations! Your Tutor Application is Approved", "tutor-approval", variables);
+        sendEmail(to, subject, "tutor-approval", variables);
     }
 }
