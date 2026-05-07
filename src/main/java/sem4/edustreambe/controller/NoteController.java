@@ -24,15 +24,15 @@ public class NoteController {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('USER', 'STUDENT')")
-    ApiResponse<NoteResponse> createNote(@RequestBody @Valid NoteRequest request) {
+    public ApiResponse<NoteResponse> createNote(@RequestBody @Valid NoteRequest request) {
         return ApiResponse.<NoteResponse>builder()
                 .result(noteService.createNote(request))
                 .build();
     }
 
-    @GetMapping("/course/{courseId}")
+    @GetMapping("/courses/{courseId}")
     @PreAuthorize("hasAnyRole('USER', 'STUDENT')")
-    ApiResponse<List<NoteResponse>> getMyNotesByCourse(@PathVariable String courseId) {
+    public ApiResponse<List<NoteResponse>> getMyNotesByCourse(@PathVariable String courseId) {
         return ApiResponse.<List<NoteResponse>>builder()
                 .result(noteService.getMyNotesByCourse(courseId))
                 .build();
@@ -40,7 +40,7 @@ public class NoteController {
 
     @DeleteMapping("/{noteId}")
     @PreAuthorize("hasAnyRole('USER', 'STUDENT')")
-    ApiResponse<Void> deleteNote(@PathVariable String noteId) {
+    public ApiResponse<Void> deleteNote(@PathVariable String noteId) {
         noteService.deleteNote(noteId);
         return ApiResponse.<Void>builder().build();
     }
