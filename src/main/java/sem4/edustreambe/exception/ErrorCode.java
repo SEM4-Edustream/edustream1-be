@@ -72,7 +72,10 @@ public enum ErrorCode {
     CART_ITEM_NOT_FOUND(9002, "cart_item.not_found", HttpStatus.NOT_FOUND),
     CART_EMPTY(9003, "cart.empty", HttpStatus.BAD_REQUEST),
     ALREADY_IN_WISHLIST(9004, "already_in_wishlist", HttpStatus.BAD_REQUEST),
-    WISHLIST_ITEM_NOT_FOUND(9005, "wishlist_item.not_found", HttpStatus.NOT_FOUND)
+    WISHLIST_ITEM_NOT_FOUND(9005, "wishlist_item.not_found", HttpStatus.NOT_FOUND),
+    
+    // NOTES (95xx)
+    NOTE_NOT_FOUND(9501, "note.not_found", HttpStatus.NOT_FOUND)
     ;
 
     int code;
