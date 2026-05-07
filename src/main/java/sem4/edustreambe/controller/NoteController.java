@@ -21,6 +21,11 @@ import java.util.List;
 @Tag(name = "Notes", description = "Student Notes Management")
 public class NoteController {
     NoteService noteService;
+    
+    @GetMapping("/test")
+    public String test() {
+        return "ok";
+    }
 
     @PostMapping
     @PreAuthorize("hasAnyRole('USER', 'STUDENT')")
@@ -30,7 +35,7 @@ public class NoteController {
                 .build();
     }
 
-    @GetMapping("/courses/{courseId}")
+    @GetMapping("/{courseId}")
     @PreAuthorize("hasAnyRole('USER', 'STUDENT')")
     public ApiResponse<List<NoteResponse>> getMyNotesByCourse(@PathVariable String courseId) {
         return ApiResponse.<List<NoteResponse>>builder()
