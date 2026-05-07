@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-public classNoteService {
+public class NoteService {
     NoteRepository noteRepository;
     UserRepository userRepository;
     CourseRepository courseRepository;
