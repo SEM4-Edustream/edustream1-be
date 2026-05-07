@@ -15,16 +15,16 @@ import sem4.edustreambe.service.NoteService;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/notes")
+@RequestMapping("/api/user-notes")
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-@Tag(name = "Notes", description = "Student Notes Management")
-public class NoteController {
+@Tag(name = "User Notes", description = "Student Notes Management")
+public class UserNoteController {
     NoteService noteService;
-    
+
     @GetMapping("/test")
     public String test() {
-        return "ok";
+        return "ok user-notes";
     }
 
     @PostMapping
