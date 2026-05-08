@@ -84,4 +84,4 @@ app:
 gemini:
   api:
     key: ${GEMINI_API_KEY:PLACEHOLDER_KEY}
-    url: https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=
+    url: https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=
