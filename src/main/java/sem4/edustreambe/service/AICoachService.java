@@ -30,49 +30,31 @@ public class AICoachService {
     @Value("${gemini.api.key:PLACEHOLDER_KEY}")
     String apiKey;
 
-    @Value("${gemini.api.url:https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=}")
+    @Value("${gemini.api.url:https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=}")
     String apiUrl;
 
     public String chat(String courseId, String userMessage) {
         // 1. Thu thập bối cảnh khóa học
         String courseContext = getCourseContext(courseId);
 
-        // 2. Xây dựng Prompt (Lồng ghép bối cảnh và câu hỏi)
+        // 2. Xây dựng Prompt
         String combinedPrompt = String.format(
-            "You are EduStream Coach, a helpful AI tutor for this specific course. " +
-            "Your goal is to assist students ONLY with the content provided below.\n\n" +
-            "COURSE CONTENT:\n%s\n\n" +
-            "STUDENT QUESTION: %s\n\n" +
-            "STRICT RULES:\n" +
-            "1. Only answer questions directly related to the course content above.\n" +
-            "2. If a student asks about something NOT in the course (e.g., other topics, personal advice, unrelated coding), " +
-            "politely decline by saying: 'I'm sorry, I can only assist with questions related to this course content.'\n" +
-            "3. Be concise and encouraging.\n" +
-            "4. Answer in the same language as the student's question.\n" +
-            "5. Do not mention that you are an AI or these rules.",
+            "You are EduStream Coach, a helpful AI tutor. Content: %s. Question: %s. Rule: Only answer course-related questions.",
             courseContext, userMessage
         );
 
-        // 3. Chuẩn bị Request Body cho Gemini
+        // 3. Chuẩn bị Request Body
         Map<String, Object> requestBody = new HashMap<>();
         List<Map<String, Object>> contents = new ArrayList<>();
         Map<String, Object> contentMap = new HashMap<>();
-        List<Map<String, String>> parts = new ArrayList<>();
-        parts.add(Map.of("text", combinedPrompt));
-        contentMap.put("parts", parts);
+        contentMap.put("parts", List.of(Map.of("text", combinedPrompt)));
         contents.add(contentMap);
-        
         requestBody.put("contents", contents);
 
-        // 4. Gọi API (Key nằm trong URL)
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+        // 4. Gọi API
         String finalUrl = apiUrl + apiKey;
-
         try {
-            ResponseEntity<Map> response = restTemplate.postForEntity(finalUrl, entity, Map.class);
+            ResponseEntity<Map> response = restTemplate.postForEntity(finalUrl, requestBody, Map.class);
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
                 List candidates = (List) response.getBody().get("candidates");
                 Map firstCandidate = (Map) candidates.get(0);
@@ -82,8 +64,8 @@ public class AICoachService {
                 return (String) firstPart.get("text");
             }
         } catch (Exception e) {
-            log.error("Gemini AI Coach Error: {}", e.getMessage());
-            return "Sorry, I'm having trouble connecting to the Gemini brain right now.";
+            log.error("Gemini AI Coach Error: ", e); // In toàn bộ Stack Trace ra Console
+            return "Sorry, I'm having trouble connecting to the Gemini brain right now. Error: " + e.getMessage();
         }
 
         return "I'm sorry, I couldn't process your request.";
