@@ -17,4 +17,5 @@ public class PaymentLinkResponse {
     String qrCode;
     Long orderCode;
     String bookingId;
+    boolean isPaid;
 }

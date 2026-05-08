@@ -60,6 +60,13 @@ public class PaymentService {
             throw new AppException(ErrorCode.UNAUTHORIZED);
         }
 
+        if (booking.getStatus() == BookingStatus.PAID) {
+            return PaymentLinkResponse.builder()
+                    .bookingId(bookingId)
+                    .isPaid(true)
+                    .build();
+        }
+
         if (booking.getStatus() != BookingStatus.PENDING) {
             throw new AppException(ErrorCode.PAYMENT_ALREADY_PROCESSED);
         }
