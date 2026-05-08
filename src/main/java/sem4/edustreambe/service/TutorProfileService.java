@@ -204,13 +204,13 @@ public class TutorProfileService {
         
         if (!publishedCourses.isEmpty()) {
             double avg = publishedCourses.stream()
-                    .mapToDouble(sem4.edustreambe.entity.Course::getAverageRating)
+                    .mapToDouble(c -> c.getAverageRating() != null ? c.getAverageRating() : 0.0)
                     .average()
                     .orElse(0.0);
             response.setAverageRating((float) avg);
             
             int totalReviews = publishedCourses.stream()
-                    .mapToInt(sem4.edustreambe.entity.Course::getReviewCount)
+                    .mapToInt(c -> c.getReviewCount() != null ? c.getReviewCount() : 0)
                     .sum();
             response.setTotalReviews(totalReviews);
         }
