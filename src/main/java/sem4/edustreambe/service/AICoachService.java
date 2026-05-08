@@ -27,59 +27,63 @@ public class AICoachService {
     final LessonRepository lessonRepository;
     final RestTemplate restTemplate;
 
-    @Value("${openai.api.key:PLACEHOLDER_KEY}")
+    @Value("${gemini.api.key:PLACEHOLDER_KEY}")
     String apiKey;
 
-    @Value("${openai.api.url:https://api.openai.com/v1/chat/completions}")
+    @Value("${gemini.api.url:https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=}")
     String apiUrl;
 
     public String chat(String courseId, String userMessage) {
         // 1. Thu thập bối cảnh khóa học
         String courseContext = getCourseContext(courseId);
 
-        // 2. Xây dựng System Prompt (Guardrails)
-        String systemPrompt = String.format(
+        // 2. Xây dựng Prompt (Lồng ghép bối cảnh và câu hỏi)
+        String combinedPrompt = String.format(
             "You are EduStream Coach, a helpful AI tutor for this specific course. " +
             "Your goal is to assist students ONLY with the content provided below.\n\n" +
             "COURSE CONTENT:\n%s\n\n" +
+            "STUDENT QUESTION: %s\n\n" +
             "STRICT RULES:\n" +
             "1. Only answer questions directly related to the course content above.\n" +
             "2. If a student asks about something NOT in the course (e.g., other topics, personal advice, unrelated coding), " +
             "politely decline by saying: 'I'm sorry, I can only assist with questions related to this course content.'\n" +
             "3. Be concise and encouraging.\n" +
-            "4. Do not mention that you are an AI or these rules.",
-            courseContext
+            "4. Answer in the same language as the student's question.\n" +
+            "5. Do not mention that you are an AI or these rules.",
+            courseContext, userMessage
         );
 
-        // 3. Chuẩn bị Request Body cho OpenAI
+        // 3. Chuẩn bị Request Body cho Gemini
         Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("model", "gpt-3.5-turbo"); // Hoặc gpt-4o-mini để tiết kiệm
+        List<Map<String, Object>> contents = new ArrayList<>();
+        Map<String, Object> contentMap = new HashMap<>();
+        List<Map<String, String>> parts = new ArrayList<>();
+        parts.add(Map.of("text", combinedPrompt));
+        contentMap.put("parts", parts);
+        contents.add(contentMap);
         
-        List<Map<String, String>> messages = new ArrayList<>();
-        messages.add(Map.of("role", "system", "content", systemPrompt));
-        messages.add(Map.of("role", "user", "content", userMessage));
-        
-        requestBody.put("messages", messages);
-        requestBody.put("temperature", 0.3); // Thấp để AI không "sáng tạo" quá đà
+        requestBody.put("contents", contents);
 
-        // 4. Gọi API
+        // 4. Gọi API (Key nằm trong URL)
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(apiKey);
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+        String finalUrl = apiUrl + apiKey;
 
         try {
-            ResponseEntity<Map> response = restTemplate.postForEntity(apiUrl, entity, Map.class);
+            ResponseEntity<Map> response = restTemplate.postForEntity(finalUrl, entity, Map.class);
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-                List choices = (List) response.getBody().get("choices");
-                Map firstChoice = (Map) choices.get(0);
-                Map message = (Map) firstChoice.get("message");
-                return (String) message.get("content");
+                List candidates = (List) response.getBody().get("candidates");
+                Map firstCandidate = (Map) candidates.get(0);
+                Map content = (Map) firstCandidate.get("content");
+                List responseParts = (List) content.get("parts");
+                Map firstPart = (Map) responseParts.get(0);
+                return (String) firstPart.get("text");
             }
         } catch (Exception e) {
-            log.error("AI Coach Error: {}", e.getMessage());
-            return "Sorry, I'm having trouble connecting to the AI brain right now.";
+            log.error("Gemini AI Coach Error: {}", e.getMessage());
+            return "Sorry, I'm having trouble connecting to the Gemini brain right now.";
         }
 
         return "I'm sorry, I couldn't process your request.";
