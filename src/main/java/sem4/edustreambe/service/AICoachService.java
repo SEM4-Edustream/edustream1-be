@@ -30,16 +30,19 @@ public class AICoachService {
     @Value("${gemini.api.key:PLACEHOLDER_KEY}")
     String apiKey;
 
-    @Value("${gemini.api.url:https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=}")
+    @Value("${gemini.api.url:https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=}")
     String apiUrl;
 
     public String chat(String courseId, String userMessage) {
+        if ("PLACEHOLDER_KEY".equals(apiKey)) {
+            return "Error: GEMINI_API_KEY is not set. Please check your .env or application.yaml";
+        }
         // 1. Thu thập bối cảnh khóa học
         String courseContext = getCourseContext(courseId);
 
         // 2. Xây dựng Prompt
         String combinedPrompt = String.format(
-            "You are EduStream Coach, a helpful AI tutor. Content: %s. Question: %s. Rule: Only answer course-related questions.",
+            "You are EduStream Coach. Content: %s. Question: %s. Rule: Only answer course-related questions.",
             courseContext, userMessage
         );
 
@@ -51,10 +54,15 @@ public class AICoachService {
         contents.add(contentMap);
         requestBody.put("contents", contents);
 
-        // 4. Gọi API
+        // 4. Gọi API với đầy đủ Header
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
         String finalUrl = apiUrl + apiKey;
+
         try {
-            ResponseEntity<Map> response = restTemplate.postForEntity(finalUrl, requestBody, Map.class);
+            ResponseEntity<Map> response = restTemplate.postForEntity(finalUrl, entity, Map.class);
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
                 List candidates = (List) response.getBody().get("candidates");
                 Map firstCandidate = (Map) candidates.get(0);
@@ -64,8 +72,8 @@ public class AICoachService {
                 return (String) firstPart.get("text");
             }
         } catch (Exception e) {
-            log.error("Gemini AI Coach Error: ", e); // In toàn bộ Stack Trace ra Console
-            return "Sorry, I'm having trouble connecting to the Gemini brain right now. Error: " + e.getMessage();
+            log.error("Gemini Error: ", e);
+            return "Connection Error: " + e.getMessage();
         }
 
         return "I'm sorry, I couldn't process your request.";
