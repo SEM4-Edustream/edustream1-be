@@ -52,7 +52,7 @@ public class AssignmentService {
             throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION); // Could create specific error
         }
 
-        AssignmentSubmission submission = assignmentSubmissionRepository.findByLessonIdAndStudentId(lessonId, student.getId().toString())
+        AssignmentSubmission submission = assignmentSubmissionRepository.findByLessonIdAndStudentId(lessonId, student.getId())
                 .orElse(AssignmentSubmission.builder()
                         .lesson(lesson)
                         .student(student)
@@ -74,7 +74,7 @@ public class AssignmentService {
 
     public AssignmentSubmissionResponse getMySubmission(String lessonId) {
         User student = getCurrentUser();
-        AssignmentSubmission submission = assignmentSubmissionRepository.findByLessonIdAndStudentId(lessonId, student.getId().toString())
+        AssignmentSubmission submission = assignmentSubmissionRepository.findByLessonIdAndStudentId(lessonId, student.getId())
                 .orElse(null);
 
         if (submission == null) {

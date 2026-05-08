@@ -5,8 +5,9 @@ import org.springframework.stereotype.Repository;
 import sem4.edustreambe.entity.QuizSubmission;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public interface QuizSubmissionRepository extends JpaRepository<QuizSubmission, String> {
-    Optional<QuizSubmission> findByLessonIdAndStudentId(String lessonId, String studentId);
+    Optional<QuizSubmission> findByLessonIdAndStudentId(String lessonId, UUID studentId);
 }

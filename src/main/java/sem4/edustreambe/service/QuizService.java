@@ -141,7 +141,7 @@ public class QuizService {
         float score = ((float) correctAnswers / questions.size()) * 100;
         boolean passed = score >= 80.0f; // Require 80% to pass
 
-        QuizSubmission submission = quizSubmissionRepository.findByLessonIdAndStudentId(lessonId, student.getId().toString())
+        QuizSubmission submission = quizSubmissionRepository.findByLessonIdAndStudentId(lessonId, student.getId())
                 .orElse(QuizSubmission.builder()
                         .lesson(lesson)
                         .student(student)
