@@ -80,3 +80,8 @@ supabase:
 app:
   frontend:
     url: ${APP_FRONTEND_URL:http://localhost:3000}
+
+openai:
+  api:
+    key: ${OPENAI_API_KEY:PLACEHOLDER_KEY}
+    url: ${OPENAI_API_URL:https://api.openai.com/v1/chat/completions}
