@@ -15,7 +15,7 @@ import sem4.edustreambe.service.NoteService;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/user-notes")
+@RequestMapping("/api/courses/notes")
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Tag(name = "User Notes", description = "Student Notes Management")
