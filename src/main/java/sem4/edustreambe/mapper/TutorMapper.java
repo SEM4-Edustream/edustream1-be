@@ -6,6 +6,7 @@ import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 import sem4.edustreambe.dto.tutor.request.TutorProfileCreationRequest;
 import sem4.edustreambe.dto.tutor.request.TutorProfileUpdateRequest;
+import sem4.edustreambe.dto.tutor.response.PublicTutorResponse;
 import sem4.edustreambe.dto.tutor.response.TutorDocumentResponse;
 import sem4.edustreambe.dto.tutor.response.TutorProfileResponse;
 import sem4.edustreambe.entity.TutorDocument;
@@ -37,6 +38,14 @@ public interface TutorMapper {
 
     @Mapping(target = "tutorName", source = "user.fullName")
     TutorProfileResponse toTutorProfileResponse(TutorProfile profile);
+
+    @Mapping(target = "fullName", source = "user.fullName")
+    @Mapping(target = "avatarUrl", source = "user.avatarUrl")
+    @Mapping(target = "totalCourses", ignore = true)
+    @Mapping(target = "averageRating", ignore = true)
+    @Mapping(target = "totalReviews", ignore = true)
+    @Mapping(target = "courses", ignore = true)
+    PublicTutorResponse toPublicTutorResponse(TutorProfile profile);
 
     TutorDocumentResponse toTutorDocumentResponse(TutorDocument document);
 }

@@ -13,6 +13,7 @@ import sem4.edustreambe.dto.tutor.request.TutorDocumentRequest;
 import sem4.edustreambe.dto.tutor.request.TutorProfileCreationRequest;
 import sem4.edustreambe.dto.tutor.request.TutorProfileUpdateRequest;
 import sem4.edustreambe.dto.tutor.request.VerificationReviewRequest;
+import sem4.edustreambe.dto.tutor.response.PublicTutorResponse;
 import sem4.edustreambe.dto.tutor.response.TutorDocumentResponse;
 import sem4.edustreambe.dto.tutor.response.TutorProfileResponse;
 import sem4.edustreambe.entity.TutorDocument;
@@ -22,7 +23,9 @@ import sem4.edustreambe.entity.VerificationProcess;
 import sem4.edustreambe.enums.VerificationStatus;
 import sem4.edustreambe.exception.AppException;
 import sem4.edustreambe.exception.ErrorCode;
+import sem4.edustreambe.mapper.CourseMapper;
 import sem4.edustreambe.mapper.TutorMapper;
+import sem4.edustreambe.repository.CourseRepository;
 import sem4.edustreambe.repository.RoleRepository;
 import sem4.edustreambe.repository.TutorDocumentRepository;
 import sem4.edustreambe.repository.TutorProfileRepository;
@@ -45,6 +48,8 @@ public class TutorProfileService {
     RoleRepository roleRepository;
     TutorMapper tutorMapper;
     EmailService emailService;
+    CourseRepository courseRepository;
+    CourseMapper courseMapper;
 
 
     private User getCurrentUser() {
@@ -179,6 +184,38 @@ public class TutorProfileService {
                 .orElseThrow(() -> new AppException(ErrorCode.TUTOR_PROFILE_NOT_FOUND));
 
         return tutorMapper.toTutorProfileResponse(profile);
+    }
+
+    public PublicTutorResponse getPublicTutorProfile(String profileId) {
+        TutorProfile profile = tutorProfileRepository.findById(profileId)
+                .orElseThrow(() -> new AppException(ErrorCode.TUTOR_PROFILE_NOT_FOUND));
+
+        if (profile.getStatus() != VerificationStatus.APPROVED) {
+            throw new AppException(ErrorCode.TUTOR_PROFILE_NOT_FOUND);
+        }
+
+        List<sem4.edustreambe.entity.Course> publishedCourses = courseRepository.findByTutorProfileId(profileId).stream()
+                .filter(course -> course.getStatus() == sem4.edustreambe.enums.CourseStatus.PUBLISHED)
+                .toList();
+
+        PublicTutorResponse response = tutorMapper.toPublicTutorResponse(profile);
+        response.setCourses(publishedCourses.stream().map(courseMapper::toCourseResponse).toList());
+        response.setTotalCourses(publishedCourses.size());
+        
+        if (!publishedCourses.isEmpty()) {
+            double avg = publishedCourses.stream()
+                    .mapToDouble(sem4.edustreambe.entity.Course::getAverageRating)
+                    .average()
+                    .orElse(0.0);
+            response.setAverageRating((float) avg);
+            
+            int totalReviews = publishedCourses.stream()
+                    .mapToInt(sem4.edustreambe.entity.Course::getReviewCount)
+                    .sum();
+            response.setTotalReviews(totalReviews);
+        }
+
+        return response;
     }
 
    

@@ -38,6 +38,7 @@ public class SecurityConfig {
             "/api/users",
             "/api/auth/**",
             "/api/public/**",
+            "/api/public/tutors/**",
             "/api/webhooks/**",
             "/api/courses/notes/**",
             "/v3/api-docs/**",
