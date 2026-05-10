@@ -66,13 +66,15 @@ public class AICoachService {
         messages.add(Map.of("role", "user",   "content", userMessage));
         requestBody.put("messages", messages);
 
-        // 4. Gọi API với Bearer Token
+        // 4. Gọi API - OpenRouter yêu cầu thêm Referer và X-Title headers
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(cleanApiKey);
+        headers.set("HTTP-Referer", "https://edu-stream.dev"); // Domain của app
+        headers.set("X-Title", "EduStream Coach");             // Tên app trên OpenRouter dashboard
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
-        log.info("Calling OpenAI API with model gpt-4o-mini");
+        log.info("Calling OpenRouter API with model gpt-4o-mini");
 
         try {
             ResponseEntity<Map> response = restTemplate.postForEntity(apiUrl, entity, Map.class);

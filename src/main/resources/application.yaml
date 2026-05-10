@@ -84,4 +84,4 @@ app:
 openai:
   api:
     key: ${OPENAI_API_KEY:PLACEHOLDER_KEY}
-    url: https://api.openai.com/v1/chat/completions
+    url: https://openrouter.ai/api/v1/chat/completions
