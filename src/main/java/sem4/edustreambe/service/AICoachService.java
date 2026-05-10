@@ -58,8 +58,9 @@ public class AICoachService {
 
         // 3. Chuẩn bị Request Body theo định dạng OpenAI
         Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("model", "gpt-4o-mini"); // Rẻ + nhanh + thông minh
-        requestBody.put("temperature", 0.3);     // Thấp để tránh hallucination
+        // Dùng model miễn phí của OpenRouter (thêm :free vào cuối)
+        requestBody.put("model", "google/gemini-2.0-flash-exp:free");
+        requestBody.put("temperature", 0.3);
 
         List<Map<String, String>> messages = new ArrayList<>();
         messages.add(Map.of("role", "system", "content", systemPrompt));
