@@ -81,7 +81,7 @@ app:
   frontend:
     url: ${APP_FRONTEND_URL:http://localhost:3000}
 
-gemini:
+openai:
   api:
-    key: ${GEMINI_API_KEY:PLACEHOLDER_KEY}
-    url: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=
+    key: ${OPENAI_API_KEY:PLACEHOLDER_KEY}
+    url: https://api.openai.com/v1/chat/completions
