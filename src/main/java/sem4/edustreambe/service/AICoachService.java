@@ -56,10 +56,8 @@ public class AICoachService {
             courseContext
         );
 
-        // 3. Chuẩn bị Request Body theo định dạng OpenAI
+        // 3. Chuẩn bị Request Body
         Map<String, Object> requestBody = new HashMap<>();
-        // Dùng model miễn phí của OpenRouter (thêm :free vào cuối)
-        requestBody.put("model", "google/gemma-4-31b-it:free");
         requestBody.put("temperature", 0.3);
 
         List<Map<String, String>> messages = new ArrayList<>();
@@ -67,30 +65,41 @@ public class AICoachService {
         messages.add(Map.of("role", "user",   "content", userMessage));
         requestBody.put("messages", messages);
 
-        // 4. Gọi API - OpenRouter yêu cầu thêm Referer và X-Title headers
+        // 4. Header cho OpenRouter
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(cleanApiKey);
-        headers.set("HTTP-Referer", "https://edu-stream.dev"); // Domain của app
-        headers.set("X-Title", "EduStream Coach");             // Tên app trên OpenRouter dashboard
-
+        headers.set("HTTP-Referer", "https://edu-stream.dev");
+        headers.set("X-Title", "EduStream Coach");
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
-        log.info("Calling OpenRouter API with model gpt-4o-mini");
 
-        try {
-            ResponseEntity<Map> response = restTemplate.postForEntity(apiUrl, entity, Map.class);
-            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-                List choices = (List) response.getBody().get("choices");
-                Map firstChoice = (Map) choices.get(0);
-                Map message = (Map) firstChoice.get("message");
-                return (String) message.get("content");
+        // 5. Danh sách model free - tự động thử sang model khác nếu bị rate limit
+        List<String> freeModels = List.of(
+            "openai/gpt-oss-20b:free",
+            "qwen/qwen3-next-80b-a3b-instruct:free",
+            "google/gemma-4-31b-it:free",
+            "nvidia/nemotron-nano-12b-v2-vl:free"
+        );
+
+        for (String model : freeModels) {
+            try {
+                requestBody.put("model", model);
+                log.info("Trying OpenRouter model: {}", model);
+                ResponseEntity<Map> response = restTemplate.postForEntity(apiUrl, entity, Map.class);
+                if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                    List choices = (List) response.getBody().get("choices");
+                    Map firstChoice = (Map) choices.get(0);
+                    Map message = (Map) firstChoice.get("message");
+                    String result = (String) message.get("content");
+                    log.info("Success with model: {}", model);
+                    return result;
+                }
+            } catch (Exception e) {
+                log.warn("Model {} failed: {}. Trying next...", model, e.getMessage());
             }
-        } catch (Exception e) {
-            log.error("OpenAI Error: ", e);
-            return "Connection Error: " + e.getMessage();
         }
 
-        return "I'm sorry, I couldn't process your request.";
+        return "I'm sorry, all AI models are currently busy. Please try again in a moment.";
     }
 
     private String getCourseContext(String courseId) {
