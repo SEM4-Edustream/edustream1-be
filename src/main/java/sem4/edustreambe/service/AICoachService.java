@@ -30,19 +30,21 @@ public class AICoachService {
     @Value("${gemini.api.key:PLACEHOLDER_KEY}")
     String apiKey;
 
-    @Value("${gemini.api.url:https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=}")
+    @Value("${gemini.api.url:https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=}")
     String apiUrl;
 
     public String chat(String courseId, String userMessage) {
-        if ("PLACEHOLDER_KEY".equals(apiKey)) {
+        String cleanApiKey = apiKey.trim();
+        if ("PLACEHOLDER_KEY".equals(cleanApiKey)) {
             return "Error: GEMINI_API_KEY is not set. Please check your .env or application.yaml";
         }
+
         // 1. Thu thập bối cảnh khóa học
         String courseContext = getCourseContext(courseId);
 
         // 2. Xây dựng Prompt
         String combinedPrompt = String.format(
-            "You are EduStream Coach. Content: %s. Question: %s. Rule: Only answer course-related questions.",
+            "You are EduStream Coach. Here is the course content:\n%s\n\nStudent question: %s\n\nRule: Only answer questions related to the course content above. If unrelated, politely decline.",
             courseContext, userMessage
         );
 
@@ -54,12 +56,13 @@ public class AICoachService {
         contents.add(contentMap);
         requestBody.put("contents", contents);
 
-        // 4. Gọi API với đầy đủ Header
+        // 4. Gọi API
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
-        String finalUrl = apiUrl + apiKey;
+
+        String finalUrl = apiUrl.trim() + cleanApiKey;
+        log.info("Calling Gemini at URL: {}", apiUrl.trim() + "***MASKED***"); // Log URL (ẩn Key)
 
         try {
             ResponseEntity<Map> response = restTemplate.postForEntity(finalUrl, entity, Map.class);
