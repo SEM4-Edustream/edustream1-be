@@ -9,7 +9,7 @@ import sem4.edustreambe.enums.AssignmentStatus;
 @Table(name = "assignment_submissions")
 @Getter
 @Setter
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
