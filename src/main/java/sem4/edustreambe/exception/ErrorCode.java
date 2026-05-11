@@ -75,7 +75,13 @@ public enum ErrorCode {
     WISHLIST_ITEM_NOT_FOUND(9005, "wishlist_item.not_found", HttpStatus.NOT_FOUND),
     
     // NOTES (95xx)
-    NOTE_NOT_FOUND(9501, "note.not_found", HttpStatus.NOT_FOUND)
+    NOTE_NOT_FOUND(9501, "note.not_found", HttpStatus.NOT_FOUND),
+
+    // Q&A (85xx)
+    QUESTION_NOT_FOUND(8501, "question.not_found", HttpStatus.NOT_FOUND),
+    ANSWER_NOT_FOUND(8502, "answer.not_found", HttpStatus.NOT_FOUND),
+    QUESTION_OWNERSHIP_DENIED(8503, "question.ownership_denied", HttpStatus.FORBIDDEN),
+    MUST_ENROLL_TO_ASK(8504, "must_enroll_to_ask", HttpStatus.FORBIDDEN)
     ;
 
     int code;
