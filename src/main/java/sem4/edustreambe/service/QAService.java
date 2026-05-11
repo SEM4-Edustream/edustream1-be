@@ -148,14 +148,20 @@ public class QAService {
         Question question = questionRepository.findById(questionId)
                 .orElseThrow(() -> new AppException(ErrorCode.QUESTION_NOT_FOUND));
 
-        // Kiểm tra xem người trả lời có phải là tutor của khóa học không
+        // Kiểm tra quyền: Chỉ Giảng viên của khóa học hoặc Admin mới được trả lời
+        boolean isInstructor = false;
         TutorProfile tutorProfile = tutorProfileRepository.findByUserId(author.getId()).orElse(null);
-        boolean isInstructor = tutorProfile != null 
-                && question.getCourse().getTutorProfile() != null
-                && question.getCourse().getTutorProfile().getId().equals(tutorProfile.getId());
+        
+        if (author.getRole().getName().equals("ADMIN")) {
+            isInstructor = true;
+        } else if (tutorProfile != null && question.getCourse().getTutorProfile() != null) {
+            String courseTutorId = question.getCourse().getTutorProfile().getId().toString();
+            String currentTutorId = tutorProfile.getId().toString();
+            isInstructor = courseTutorId.equals(currentTutorId);
+        }
 
         if (!isInstructor) {
-            throw new AppException(ErrorCode.UNAUTHORIZED); // Chỉ giảng viên mới được trả lời
+            throw new AppException(ErrorCode.UNAUTHORIZED);
         }
 
         QuestionAnswer answer = QuestionAnswer.builder()
@@ -171,14 +177,19 @@ public class QAService {
         question.setAnswerCount(question.getAnswerCount() + 1);
         questionRepository.save(question);
 
-        // GỬI THÔNG BÁO CHO HỌC VIÊN
-        notificationService.sendNotification(
-            question.getStudent(),
-            "Câu hỏi của bạn đã được trả lời",
-            "Giảng viên " + author.getFullName() + " đã trả lời câu hỏi: " + question.getTitle(),
-            sem4.edustreambe.enums.NotificationType.Q_AND_A,
-            "/learning/" + question.getCourse().getId() + "?qa=" + question.getId()
-        );
+        // GỬI THÔNG BÁO CHO HỌC VIÊN (Không để lỗi này làm rollback transaction)
+        try {
+            notificationService.sendNotification(
+                question.getStudent(),
+                "Câu hỏi của bạn đã được trả lời",
+                "Giảng viên " + author.getFullName() + " đã trả lời câu hỏi: " + question.getTitle(),
+                sem4.edustreambe.enums.NotificationType.Q_AND_A,
+                "/learning/" + question.getCourse().getId() + "?qa=" + question.getId()
+            );
+        } catch (Exception e) {
+            // Log lỗi nhưng vẫn cho phép trả về kết quả thành công
+            System.err.println("Failed to send notification: " + e.getMessage());
+        }
 
         return mapAnswerToResponse(saved);
     }
