@@ -50,6 +50,7 @@ public class TutorProfileService {
     EmailService emailService;
     CourseRepository courseRepository;
     CourseMapper courseMapper;
+    NotificationService notificationService;
 
 
     private User getCurrentUser() {
@@ -282,6 +283,20 @@ public class TutorProfileService {
             log.info("Admin [{}] REJECTED profile [{}] with comment: [{}]",
                     adminUsername, profileId, request.getReviewComment());
         }
+
+        // Gửi thông báo In-app
+        String title = request.getAction() == VerificationStatus.APPROVED ? "Hồ sơ giảng viên được duyệt" : "Hồ sơ giảng viên bị từ chối";
+        String message = request.getAction() == VerificationStatus.APPROVED 
+                ? "Chúc mừng! Hồ sơ giảng viên của bạn đã được duyệt. Bạn có thể bắt đầu tạo khóa học ngay."
+                : "Rất tiếc, hồ sơ của bạn đã bị từ chối. Lý do: " + request.getReviewComment();
+        
+        notificationService.sendNotification(
+            profile.getUser(),
+            title,
+            message,
+            sem4.edustreambe.enums.NotificationType.SYSTEM,
+            "/tutor/dashboard"
+        );
 
         TutorProfile saved = tutorProfileRepository.save(profile);
         return tutorMapper.toTutorProfileResponse(saved);

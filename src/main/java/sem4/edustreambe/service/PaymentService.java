@@ -38,6 +38,7 @@ public class PaymentService {
     PaymentTransactionRepository transactionRepository;
     EnrollmentRepository enrollmentRepository;
     EmailService emailService;
+    NotificationService notificationService;
 
     @org.springframework.beans.factory.annotation.Value("${app.frontend.url:http://localhost:3000}")
     @lombok.experimental.NonFinal
@@ -207,6 +208,15 @@ public class PaymentService {
                             booking.getUser().getUsername(), course.getTitle());
                 }
             }
+
+            // Gửi thông báo In-app về thanh toán thành công
+            notificationService.sendNotification(
+                booking.getUser(),
+                "Thanh toán thành công",
+                "Bạn đã thanh toán thành công " + booking.getAmount() + "đ cho đơn hàng #" + booking.getId(),
+                sem4.edustreambe.enums.NotificationType.PAYMENT,
+                "/my-learning"
+            );
 
             // Send order confirmation email
             try {

@@ -148,18 +148,20 @@ public class QAService {
                 .orElseThrow(() -> new AppException(ErrorCode.QUESTION_NOT_FOUND));
 
         // Kiểm tra xem người trả lời có phải là tutor của khóa học không
-        boolean isInstructor = false;
         TutorProfile tutorProfile = tutorProfileRepository.findByUserId(author.getId()).orElse(null);
-        if (tutorProfile != null) {
-            isInstructor = question.getCourse().getTutorProfile() != null
-                    && question.getCourse().getTutorProfile().getId().equals(tutorProfile.getId());
+        boolean isInstructor = tutorProfile != null 
+                && question.getCourse().getTutorProfile() != null
+                && question.getCourse().getTutorProfile().getId().equals(tutorProfile.getId());
+
+        if (!isInstructor) {
+            throw new AppException(ErrorCode.UNAUTHORIZED); // Chỉ giảng viên mới được trả lời
         }
 
         QuestionAnswer answer = QuestionAnswer.builder()
                 .question(question)
                 .author(author)
                 .body(request.getBody())
-                .isInstructorAnswer(isInstructor)
+                .isInstructorAnswer(true)
                 .build();
 
         QuestionAnswer saved = questionAnswerRepository.save(answer);
@@ -167,6 +169,15 @@ public class QAService {
         // Cập nhật số lượng câu trả lời
         question.setAnswerCount(question.getAnswerCount() + 1);
         questionRepository.save(question);
+
+        // GỬI THÔNG BÁO CHO HỌC VIÊN
+        notificationService.sendNotification(
+            question.getStudent(),
+            "Câu hỏi của bạn đã được trả lời",
+            "Giảng viên " + author.getFullName() + " đã trả lời câu hỏi: " + question.getTitle(),
+            sem4.edustreambe.enums.NotificationType.Q_AND_A,
+            "/learning/" + question.getCourse().getId() + "?qa=" + question.getId()
+        );
 
         return mapAnswerToResponse(saved);
     }
