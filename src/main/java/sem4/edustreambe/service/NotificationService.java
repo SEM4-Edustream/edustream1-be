@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +25,7 @@ public class NotificationService {
 
     NotificationRepository notificationRepository;
     UserRepository userRepository;
+    SimpMessagingTemplate messagingTemplate;
 
     private User getCurrentUser() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -42,6 +44,14 @@ public class NotificationService {
                 .isRead(false)
                 .build();
         notificationRepository.save(notification);
+        
+        // Đẩy thông báo thời gian thực qua WebSocket
+        // Client sẽ subscribe vào: /user/queue/notifications
+        messagingTemplate.convertAndSendToUser(
+            user.getUsername(), 
+            "/queue/notifications", 
+            notification
+        );
         
         // TODO: Gửi email ở đây nếu cần (Async)
     }
