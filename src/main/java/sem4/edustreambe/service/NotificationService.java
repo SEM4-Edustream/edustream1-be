@@ -46,19 +46,38 @@ public class NotificationService {
         notificationRepository.save(notification);
         
         // Đẩy thông báo thời gian thực qua WebSocket
-        // Client sẽ subscribe vào: /user/queue/notifications
+        // Chuyển sang DTO để tránh lỗi serialize entity (Lazy Loading/Circular reference)
+        sem4.edustreambe.dto.notification.NotificationResponse response = sem4.edustreambe.dto.notification.NotificationResponse.builder()
+                .id(notification.getId())
+                .title(notification.getTitle())
+                .message(notification.getMessage())
+                .type(notification.getType())
+                .referenceUrl(notification.getReferenceUrl())
+                .isRead(notification.getIsRead())
+                .createdAt(notification.getCreatedAt())
+                .build();
+
         messagingTemplate.convertAndSendToUser(
             user.getUsername(), 
             "/queue/notifications", 
-            notification
+            response
         );
         
         // TODO: Gửi email ở đây nếu cần (Async)
     }
 
-    public Page<Notification> getMyNotifications(Pageable pageable) {
+    public Page<sem4.edustreambe.dto.notification.NotificationResponse> getMyNotifications(Pageable pageable) {
         User currentUser = getCurrentUser();
-        return notificationRepository.findByUserIdOrderByCreatedAtDesc(currentUser.getId(), pageable);
+        return notificationRepository.findByUserIdOrderByCreatedAtDesc(currentUser.getId(), pageable)
+                .map(n -> sem4.edustreambe.dto.notification.NotificationResponse.builder()
+                        .id(n.getId())
+                        .title(n.getTitle())
+                        .message(n.getMessage())
+                        .type(n.getType())
+                        .referenceUrl(n.getReferenceUrl())
+                        .isRead(n.getIsRead())
+                        .createdAt(n.getCreatedAt())
+                        .build());
     }
 
     public void markAsRead(String notificationId) {

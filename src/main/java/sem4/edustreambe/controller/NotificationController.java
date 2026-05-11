@@ -27,9 +27,9 @@ public class NotificationController {
     @GetMapping
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Lấy danh sách thông báo của tôi (phân trang)")
-    public ApiResponse<Page<Notification>> getMyNotifications(
+    public ApiResponse<Page<sem4.edustreambe.dto.notification.NotificationResponse>> getMyNotifications(
             @org.springdoc.core.annotations.ParameterObject Pageable pageable) {
-        return ApiResponse.<Page<Notification>>builder()
+        return ApiResponse.<Page<sem4.edustreambe.dto.notification.NotificationResponse>>builder()
                 .result(notificationService.getMyNotifications(pageable))
                 .build();
     }

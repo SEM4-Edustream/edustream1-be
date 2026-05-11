@@ -152,7 +152,7 @@ public class QAService {
         boolean isInstructor = false;
         TutorProfile tutorProfile = tutorProfileRepository.findByUserId(author.getId()).orElse(null);
         
-        if (author.getRole().getName().equals("ADMIN")) {
+        if (author.getRole() != null && "ADMIN".equals(author.getRole().getName())) {
             isInstructor = true;
         } else if (tutorProfile != null && question.getCourse().getTutorProfile() != null) {
             String courseTutorId = question.getCourse().getTutorProfile().getId().toString();
@@ -169,6 +169,7 @@ public class QAService {
                 .author(author)
                 .body(request.getBody())
                 .isInstructorAnswer(true)
+                .isTopAnswer(false)
                 .build();
 
         QuestionAnswer saved = questionAnswerRepository.save(answer);
