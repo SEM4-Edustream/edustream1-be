@@ -33,6 +33,7 @@ public class QAService {
     UserRepository userRepository;
     EnrollmentRepository enrollmentRepository;
     TutorProfileRepository tutorProfileRepository;
+    NotificationService notificationService;
 
     // ─────────────────────────────────────────────
     //  Helpers
