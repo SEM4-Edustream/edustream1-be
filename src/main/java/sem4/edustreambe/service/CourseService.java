@@ -137,6 +137,37 @@ public class CourseService {
         return courseMapper.toCourseModuleResponse(saved);
     }
 
+    public CourseModuleResponse updateModule(String courseId, String moduleId, CourseModuleRequest request) {
+        CourseModule module = moduleRepository.findById(moduleId)
+                .orElseThrow(() -> new AppException(ErrorCode.MODULE_NOT_FOUND));
+
+        verifyCourseOwnership(module.getCourse());
+        if (module.getCourse().getStatus() == CourseStatus.PUBLISHED
+                || module.getCourse().getStatus() == CourseStatus.PENDING) {
+            throw new AppException(ErrorCode.INVALID_COURSE_STATUS);
+        }
+
+        module.setTitle(request.getTitle());
+        if (request.getOrderIndex() != null) {
+            module.setOrderIndex(request.getOrderIndex());
+        }
+
+        return courseMapper.toCourseModuleResponse(moduleRepository.save(module));
+    }
+
+    public void deleteModule(String courseId, String moduleId) {
+        CourseModule module = moduleRepository.findById(moduleId)
+                .orElseThrow(() -> new AppException(ErrorCode.MODULE_NOT_FOUND));
+
+        verifyCourseOwnership(module.getCourse());
+        if (module.getCourse().getStatus() == CourseStatus.PUBLISHED
+                || module.getCourse().getStatus() == CourseStatus.PENDING) {
+            throw new AppException(ErrorCode.INVALID_COURSE_STATUS);
+        }
+
+        moduleRepository.delete(module);
+    }
+
     // ==========================================
     // TUTOR: LESSON MANAGEMENT
     // ==========================================
