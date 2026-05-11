@@ -3,6 +3,7 @@ package sem4.edustreambe.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.SuperBuilder;
 import sem4.edustreambe.enums.AssignmentStatus;
 
 @Entity
@@ -35,7 +36,7 @@ public class AssignmentSubmission extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    @Builder.Default
+    @SuperBuilder.Default
     AssignmentStatus status = AssignmentStatus.SUBMITTED;
 
     @Column
