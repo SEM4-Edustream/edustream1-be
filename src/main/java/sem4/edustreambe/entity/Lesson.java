@@ -44,22 +44,22 @@ public class Lesson extends BaseEntity {
     Integer orderIndex;
 
     @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
-    @SuperBuilder.Default
+    @Builder.Default
     java.util.List<QuizQuestion> quizQuestions = new java.util.ArrayList<>();
 
     @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
-    @SuperBuilder.Default
+    @Builder.Default
     java.util.List<AssignmentSubmission> assignments = new java.util.ArrayList<>();
 
     @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
-    @SuperBuilder.Default
+    @Builder.Default
     java.util.List<LessonProgress> progresses = new java.util.ArrayList<>();
 
     @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
-    @SuperBuilder.Default
+    @Builder.Default
     java.util.List<Note> notes = new java.util.ArrayList<>();
 
     @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
-    @SuperBuilder.Default
+    @Builder.Default
     java.util.List<Question> qas = new java.util.ArrayList<>();
 }

@@ -36,7 +36,7 @@ public class AssignmentSubmission extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    @SuperBuilder.Default
+    @Builder.Default
     AssignmentStatus status = AssignmentStatus.SUBMITTED;
 
     @Column
