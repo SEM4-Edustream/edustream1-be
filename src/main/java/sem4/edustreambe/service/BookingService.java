@@ -65,7 +65,7 @@ public class BookingService {
         Optional<Booking> existingBooking = bookingRepository.findByUserIdAndCourseIdAndStatus(
                 student.getId(), course.getId(), BookingStatus.PENDING);
         if (existingBooking.isPresent()) {
-            throw new AppException(ErrorCode.BOOKING_ALREADY_EXISTS);
+            return toBookingResponse(existingBooking.get());
         }
 
         BigDecimal totalAmount = course.getPrice() != null ? course.getPrice() : BigDecimal.ZERO;
@@ -211,8 +211,8 @@ public class BookingService {
             throw new AppException(ErrorCode.PAYMENT_ALREADY_PROCESSED);
         }
 
-        Optional<PaymentTransaction> tx = paymentTransactionRepository.findByBookingId(bookingId);
-        tx.ifPresent(paymentTransactionRepository::delete);
+        List<PaymentTransaction> transactions = paymentTransactionRepository.findAllByBookingId(bookingId);
+        paymentTransactionRepository.deleteAll(transactions);
 
         bookingRepository.delete(booking);
     }

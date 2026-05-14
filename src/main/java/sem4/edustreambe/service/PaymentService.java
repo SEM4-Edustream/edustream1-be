@@ -74,19 +74,22 @@ public class PaymentService {
             throw new AppException(ErrorCode.PAYMENT_ALREADY_PROCESSED);
         }
 
-        // Cancel previous pending transactions for this booking to avoid spam
-        Optional<PaymentTransaction> existingTx = transactionRepository.findByBookingId(bookingId);
-        if (existingTx.isPresent() && existingTx.get().getStatus() == TransactionStatus.PENDING) {
-            existingTx.get().setStatus(TransactionStatus.CANCELLED);
-            transactionRepository.save(existingTx.get());
+        // 1. Cancel ALL previous pending transactions for this booking to avoid conflicts
+        List<PaymentTransaction> pendingTxs = transactionRepository.findAllByBookingIdAndStatus(bookingId, TransactionStatus.PENDING);
+        for (PaymentTransaction pTx : pendingTxs) {
+            pTx.setStatus(TransactionStatus.CANCELLED);
+            transactionRepository.save(pTx);
         }
 
-        // Generate unique Order Code from current timestamp (safe range for PayOS)
+        // 2. Generate unique Order Code
         Long orderCode = Long.parseLong(String.valueOf(System.currentTimeMillis()).substring(3, 12));
-
         Long amount = booking.getAmount().longValue();
 
-        // Build line items from BookingItems
+        // 3. Set Expiration Time (e.g., 30 minutes from now)
+        // PayOS expects Unix Timestamp in seconds
+        long expiredAt = (System.currentTimeMillis() / 1000) + (30 * 60); 
+
+        // Build line items
         List<PaymentLinkItem> paymentItems = booking.getItems().stream()
                 .map(item -> PaymentLinkItem.builder()
                         .name(item.getCourse().getTitle().length() > 50
@@ -97,16 +100,16 @@ public class PaymentService {
                         .build())
                 .toList();
 
-        // For multi-item bookings, use the booking ID in URLs
-        String returnUrl = frontendUrl + "/payment/success?bookingId=" + booking.getId();
+        String returnUrl = frontendUrl + "/payment/success?courseId=" + booking.getItems().get(0).getCourse().getId() + "&bookingId=" + booking.getId();
         String cancelUrl = frontendUrl + "/payment/cancel?bookingId=" + booking.getId();
 
         CreatePaymentLinkRequest.CreatePaymentLinkRequestBuilder requestBuilder = CreatePaymentLinkRequest.builder()
                 .orderCode(orderCode)
                 .amount(amount)
-                .description("EduStream Course")
+                .description("EduStream Course #" + orderCode)
                 .returnUrl(returnUrl)
-                .cancelUrl(cancelUrl);
+                .cancelUrl(cancelUrl)
+                .expiredAt(expiredAt); // Thêm thời gian hết hạn ở đây
 
         // Add items
         for (PaymentLinkItem item : paymentItems) {
