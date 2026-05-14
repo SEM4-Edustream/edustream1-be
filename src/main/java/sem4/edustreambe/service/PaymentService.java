@@ -101,7 +101,7 @@ public class PaymentService {
                 .toList();
 
         String returnUrl = frontendUrl + "/payment/success?courseId=" + booking.getItems().get(0).getCourse().getId() + "&bookingId=" + booking.getId();
-        String cancelUrl = frontendUrl + "/payment/cancel?bookingId=" + booking.getId();
+        String cancelUrl = frontendUrl + "/payment/cancel?courseId=" + booking.getItems().get(0).getCourse().getId() + "&bookingId=" + booking.getId();
 
         CreatePaymentLinkRequest.CreatePaymentLinkRequestBuilder requestBuilder = CreatePaymentLinkRequest.builder()
                 .orderCode(orderCode)
