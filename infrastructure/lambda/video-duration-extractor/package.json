@@ -1,0 +1,12 @@
+{
+  "name": "edustream-video-duration-extractor",
+  "version": "1.0.0",
+  "description": "AWS Lambda to extract video duration from S3 and update EduStream Backend",
+  "main": "index.js",
+  "dependencies": {
+    "axios": "^1.6.0",
+    "fluent-ffmpeg": "^2.1.2",
+    "@ffprobe-installer/ffprobe": "^2.1.2",
+    "@aws-sdk/client-s3": "^3.400.0"
+  }
+}

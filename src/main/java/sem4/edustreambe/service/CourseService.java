@@ -14,6 +14,7 @@ import sem4.edustreambe.dto.course.request.CourseCreationRequest;
 import sem4.edustreambe.dto.course.request.CourseModuleRequest;
 import sem4.edustreambe.dto.course.request.CourseUpdateRequest;
 import sem4.edustreambe.dto.course.request.LessonRequest;
+import sem4.edustreambe.dto.course.request.VideoDurationWebhookRequest;
 import sem4.edustreambe.dto.course.response.CourseModuleResponse;
 import sem4.edustreambe.dto.course.response.CourseResponse;
 import sem4.edustreambe.dto.course.response.LessonResponse;
@@ -246,6 +247,27 @@ public class CourseService {
         }
 
         lessonRepository.delete(lesson);
+    }
+
+    // ==========================================
+    // INTERNAL WEBHOOKS (AWS LAMBDA)
+    // ==========================================
+
+    @Transactional
+    public void updateLessonDurationFromWebhook(VideoDurationWebhookRequest request) {
+        // Simple security check
+        String EXPECTED_SECRET = "lamda-secret-edustream-2026";
+        if (!EXPECTED_SECRET.equals(request.getSecretKey())) {
+            log.warn("Unauthorized attempt to update video duration for lesson {}", request.getLessonId());
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+
+        Lesson lesson = lessonRepository.findById(request.getLessonId())
+                .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
+
+        lesson.setDurationSeconds(request.getDurationSeconds());
+        lessonRepository.save(lesson);
+        log.info("Updated duration for lesson {} to {} seconds via Lambda Webhook", request.getLessonId(), request.getDurationSeconds());
     }
 
     // ==========================================
