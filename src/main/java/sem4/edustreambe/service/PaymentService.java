@@ -106,7 +106,7 @@ public class PaymentService {
         CreatePaymentLinkRequest.CreatePaymentLinkRequestBuilder requestBuilder = CreatePaymentLinkRequest.builder()
                 .orderCode(orderCode)
                 .amount(amount)
-                .description("EduStream Course #" + orderCode)
+                .description("EduStream #" + orderCode)
                 .returnUrl(returnUrl)
                 .cancelUrl(cancelUrl)
                 .expiredAt(expiredAt); // Thêm thời gian hết hạn ở đây
