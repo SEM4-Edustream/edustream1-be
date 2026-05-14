@@ -31,4 +31,6 @@ public class CourseResponse {
     List<String> learningObjectives;
     List<String> prerequisites;
     List<String> targetAudiences;
+    String welcomeMessage;
+    String congratulationsMessage;
 }

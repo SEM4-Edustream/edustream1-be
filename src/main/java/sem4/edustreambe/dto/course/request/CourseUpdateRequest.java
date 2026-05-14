@@ -37,4 +37,6 @@ public class CourseUpdateRequest {
     List<String> prerequisites;
 
     List<String> targetAudiences;
+    String welcomeMessage;
+    String congratulationsMessage;
 }

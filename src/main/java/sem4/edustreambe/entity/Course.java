@@ -82,4 +82,10 @@ public class Course extends BaseEntity {
     @CollectionTable(name = "course_target_audiences", joinColumns = @JoinColumn(name = "course_id"))
     @Column(name = "audience")
     List<String> targetAudiences;
+
+    @Column(columnDefinition = "TEXT")
+    String welcomeMessage;
+
+    @Column(columnDefinition = "TEXT")
+    String congratulationsMessage;
 }
