@@ -93,6 +93,16 @@ public class CourseService {
     public CourseResponse getCourseDetail(String courseId) {
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
+        
+        // Force load modules and lessons to avoid LazyInitializationException and ensure data is sent
+        if (course.getModules() != null) {
+            course.getModules().forEach(module -> {
+                if (module.getLessons() != null) {
+                    module.getLessons().size();
+                }
+            });
+        }
+        
         return courseMapper.toCourseResponse(course);
     }
 
