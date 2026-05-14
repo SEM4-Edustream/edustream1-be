@@ -17,7 +17,8 @@ import sem4.edustreambe.entity.Lesson;
 
 @Mapper(
         componentModel = "spring",
-        nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE
+        nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
+        uses = {CategoryMapper.class}
 )
 public interface CourseMapper {
 
