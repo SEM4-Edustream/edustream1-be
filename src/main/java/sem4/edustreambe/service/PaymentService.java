@@ -270,5 +270,4 @@ public class PaymentService {
             log.error("Email sending failed", e);
         }
     }
-    }
 }
