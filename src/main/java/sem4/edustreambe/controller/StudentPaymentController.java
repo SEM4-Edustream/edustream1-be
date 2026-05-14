@@ -27,4 +27,12 @@ public class StudentPaymentController {
                 .result(paymentService.createPaymentLink(bookingId))
                 .build();
     }
+
+    @PostMapping("/verify/{orderCode}")
+    public ApiResponse<Void> verifyPayment(@PathVariable Long orderCode) {
+        paymentService.verifyPayment(orderCode);
+        return ApiResponse.<Void>builder()
+                .message("Payment verified successfully.")
+                .build();
+    }
 }

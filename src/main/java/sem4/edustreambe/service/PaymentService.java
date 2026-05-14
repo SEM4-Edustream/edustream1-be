@@ -281,4 +281,42 @@ public class PaymentService {
             log.error("Email sending failed", e);
         }
     }
+    
+    @Transactional
+    public void verifyPayment(Long orderCode) {
+        log.info("Proactively verifying payment for orderCode: {}", orderCode);
+        
+        try {
+            vn.payos.model.v2.paymentRequests.PaymentLinkInformation data = payOS.paymentRequests().getPaymentLinkInformation(orderCode);
+            log.info("PayOS status for order {}: {}", orderCode, data.getStatus());
+
+            if ("PAID".equals(data.getStatus())) {
+                Optional<PaymentTransaction> txOpt = transactionRepository.findByOrderCode(orderCode);
+                if (txOpt.isPresent()) {
+                    PaymentTransaction tx = txOpt.get();
+                    if (tx.getStatus() != TransactionStatus.PAID) {
+                        log.info("Proactive check: Order {} is PAID on PayOS. Updating local DB...", orderCode);
+                        
+                        // 1. Update Transaction
+                        tx.setStatus(TransactionStatus.PAID);
+                        transactionRepository.save(tx);
+
+                        // 2. Update Booking
+                        Booking booking = tx.getBooking();
+                        if (booking.getStatus() != BookingStatus.PAID) {
+                            booking.setStatus(BookingStatus.PAID);
+                            bookingRepository.save(booking);
+                            
+                            // 3. Post-payment
+                            processPostPayment(booking);
+                            log.info("Proactive check: Successfully updated Booking {} to PAID", booking.getId());
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error during proactive payment verification for order {}", orderCode, e);
+            throw new RuntimeException("Không thể xác minh thanh toán: " + e.getMessage());
+        }
+    }
 }
