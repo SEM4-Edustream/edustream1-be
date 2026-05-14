@@ -46,27 +46,18 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(value = MethodArgumentNotValidException.class)
     ResponseEntity<ApiResponse<?>> handlingValidationException(MethodArgumentNotValidException exception) {
-        String enumKey = exception.getBindingResult()
+        String errorMessage = exception.getBindingResult()
                 .getFieldErrors()
                 .stream()
                 .findFirst()
                 .map(fieldError -> fieldError.getDefaultMessage())
-                .orElse("UNCATEGORIZED_EXCEPTION");
+                .orElse("Validation error");
 
-        ErrorCode errorCode;
-        try {
-            errorCode = ErrorCode.valueOf(enumKey);
-        } catch (IllegalArgumentException e) {
-            log.warn("Unknown validation error key: {}", enumKey);
-            errorCode = ErrorCode.INVALID_KEY;
-        }
-
-        String message = messageSource.getMessage(errorCode.getMessageKey(), null, LocaleContextHolder.getLocale());
-
-        return ResponseEntity.status(errorCode.getStatusCode())
+        // We don't try to parse enumKey here, we just return the validation message directly
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.builder()
-                        .code(errorCode.getCode())
-                        .message(message)
+                        .code(ErrorCode.FIELD_REQUIRED.getCode()) // Use a generic validation code
+                        .message(errorMessage)
                         .build());
     }
 
