@@ -199,13 +199,9 @@ public class PaymentService {
             bookingRepository.save(booking);
             log.info("Updated Booking {} to PAID", booking.getId());
 
-            // 3. Post-payment processing (Wrap in try-catch to avoid rolling back the payment status)
-            try {
-                processPostPayment(booking);
-            } catch (Exception e) {
-                log.error("Post-payment processing failed for booking {}, but payment is kept as PAID. Error: {}", 
-                    booking.getId(), e.getMessage(), e);
-            }
+            // 3. Post-payment processing (Enrollment, Notifications, Email)
+            // Note: We run this inside the same transaction to ensure data consistency
+            processPostPayment(booking);
 
             response.put("error", 0);
             response.put("message", "Ok");
@@ -220,10 +216,16 @@ public class PaymentService {
     }
 
     private void processPostPayment(Booking booking) {
+        log.info("Processing post-payment for Booking ID: {}. Items count: {}", booking.getId(), booking.getItems() != null ? booking.getItems().size() : 0);
         // Create Enrollment for ALL courses in the booking
         for (BookingItem item : booking.getItems()) {
             Course course = item.getCourse();
-            if (!enrollmentRepository.existsByUserIdAndCourseId(booking.getUser().getId(), course.getId())) {
+            UUID userId = booking.getUser().getId();
+            String courseId = course.getId();
+            
+            log.info("Checking enrollment for User ID: {} and Course ID: {}", userId, courseId);
+            
+            if (!enrollmentRepository.existsByUserIdAndCourseId(userId, courseId)) {
                 Enrollment enrollment = Enrollment.builder()
                         .user(booking.getUser())
                         .course(course)
@@ -231,29 +233,37 @@ public class PaymentService {
                         .progressPercentage(0)
                         .build();
                 enrollmentRepository.save(enrollment);
-                log.info("Auto-enrolled user {} to course {}", booking.getUser().getUsername(), course.getTitle());
+                log.info("SUCCESS: Auto-enrolled User ID {} to Course: {}", userId, course.getTitle());
 
                 // Welcome Notification
-                if (course.getWelcomeMessage() != null && !course.getWelcomeMessage().isBlank()) {
-                    notificationService.sendNotification(
-                            booking.getUser(),
-                            "Welcome to " + course.getTitle(),
-                            course.getWelcomeMessage(),
-                            sem4.edustreambe.enums.NotificationType.COURSE_UPDATE,
-                            "/course/" + course.getId() + "/learn"
-                    );
+                try {
+                    if (course.getWelcomeMessage() != null && !course.getWelcomeMessage().isBlank()) {
+                        notificationService.sendNotification(
+                                booking.getUser(),
+                                "Welcome to " + course.getTitle(),
+                                course.getWelcomeMessage(),
+                                sem4.edustreambe.enums.NotificationType.COURSE_UPDATE,
+                                "/course/" + course.getId() + "/learn"
+                        );
+                    }
+                } catch (Exception e) {
+                    log.error("Welcome notification failed for course {}", course.getTitle(), e);
                 }
             }
         }
 
         // General Payment Notification
-        notificationService.sendNotification(
-            booking.getUser(),
-            "Thanh toán thành công",
-            "Bạn đã thanh toán thành công cho đơn hàng #" + booking.getId(),
-            sem4.edustreambe.enums.NotificationType.PAYMENT,
-            "/my-learning"
-        );
+        try {
+            notificationService.sendNotification(
+                booking.getUser(),
+                "Thanh toán thành công",
+                "Bạn đã thanh toán thành công cho đơn hàng #" + booking.getId(),
+                sem4.edustreambe.enums.NotificationType.PAYMENT,
+                "/my-learning"
+            );
+        } catch (Exception e) {
+            log.error("Payment notification failed for booking {}", booking.getId(), e);
+        }
 
         // Confirmation Email
         try {

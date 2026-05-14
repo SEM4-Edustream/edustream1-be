@@ -36,17 +36,19 @@ public class UserService {
     EmailService emailService;
 
     public UserResponse createUser(UserCreationRequest request) {
-        log.info("Creating new user with username: {}", request.getUsername());
+        String normalizedEmail = request.getEmail().toLowerCase().trim();
+        log.info("Creating new user with username: {} and email: {}", request.getUsername(), normalizedEmail);
 
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new AppException(ErrorCode.USER_EXISTED);
         }
 
-        if (userRepository.existsByEmail(request.getEmail())) {
+        if (userRepository.existsByEmailIgnoreCase(normalizedEmail)) {
             throw new AppException(ErrorCode.EMAIL_EXISTED);
         }
 
         User user = userMapper.toUser(request);
+        user.setEmail(normalizedEmail);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
 
         // Self-register must always be assigned the default STUDENT role.
@@ -68,16 +70,17 @@ public class UserService {
     }
 
     public SyncUserResponse syncUserFromSocial(String email, String fullName, String avatarUrl) {
-        log.info("Syncing social user: {}", email);
+        String normalizedEmail = email.toLowerCase().trim();
+        log.info("Syncing social user: {}", normalizedEmail);
 
         final boolean[] isNewUser = {false};
 
-        User user = userRepository.findByEmail(email).orElseGet(() -> {
-            log.info("Creating new social user for email: {}", email);
+        User user = userRepository.findByEmailIgnoreCase(normalizedEmail).orElseGet(() -> {
+            log.info("Creating new social user for email: {}", normalizedEmail);
             isNewUser[0] = true;
             
             // Create a unique username from email
-            String username = email.split("@")[0];
+            String username = normalizedEmail.split("@")[0];
             if (userRepository.existsByUsername(username)) {
                 username = username + "_" + System.currentTimeMillis();
             }

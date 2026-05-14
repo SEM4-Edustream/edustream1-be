@@ -97,6 +97,7 @@ public class AuthenticationController {
         return ApiResponse.<AuthenticationResponse>builder()
                 .result(AuthenticationResponse.builder()
                         .token(internalToken)
+                        .userId(syncResponse.getUserEntity().getId().toString())
                         .authenticated(true)
                         .isNewUser(syncResponse.isNewUser())
                         .build())

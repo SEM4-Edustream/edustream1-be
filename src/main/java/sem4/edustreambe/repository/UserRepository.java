@@ -10,12 +10,12 @@ import java.util.UUID;
 @Repository
 public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByUsername(String username);
-    Optional<User> findByEmail(String email);
+    Optional<User> findByEmailIgnoreCase(String email);
     
-    @org.springframework.data.jpa.repository.Query("SELECT u FROM User u WHERE u.username = :login OR u.email = :login")
+    @org.springframework.data.jpa.repository.Query("SELECT u FROM User u WHERE u.username = :login OR LOWER(u.email) = LOWER(:login)")
     Optional<User> findByUsernameOrEmail(String login);
 
     boolean existsByUsername(String username);
-    boolean existsByEmail(String email);
+    boolean existsByEmailIgnoreCase(String email);
 
 }
