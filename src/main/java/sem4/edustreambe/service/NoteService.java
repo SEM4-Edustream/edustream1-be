@@ -31,8 +31,8 @@ public class NoteService {
     LessonRepository lessonRepository;
 
     public NoteResponse createNote(NoteRequest request) {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByEmail(email)
+        String login = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsernameOrEmail(login)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         Course course = courseRepository.findById(request.getCourseId())
@@ -55,8 +55,8 @@ public class NoteService {
     }
 
     public List<NoteResponse> getMyNotesByCourse(String courseId) {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByEmail(email)
+        String login = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsernameOrEmail(login)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         return noteRepository.findAllByUserIdAndCourseIdOrderByCreatedAtDesc(user.getId(), courseId)
@@ -66,8 +66,8 @@ public class NoteService {
     }
 
     public void deleteNote(String noteId) {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByEmail(email)
+        String login = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsernameOrEmail(login)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         Note note = noteRepository.findById(noteId)
