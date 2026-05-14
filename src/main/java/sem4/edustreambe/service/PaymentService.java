@@ -41,6 +41,7 @@ public class PaymentService {
     BookingRepository bookingRepository;
     PaymentTransactionRepository transactionRepository;
     EnrollmentRepository enrollmentRepository;
+    EnrollmentService enrollmentService;
     EmailService emailService;
     NotificationService notificationService;
 
@@ -143,18 +144,18 @@ public class PaymentService {
         }
     }
 
-    @Transactional
+    // NOT @Transactional at this level — each step manages its own transaction
     public Map<String, Object> handlePayOSWebhook(Map<String, Object> body) {
         Map<String, Object> response = new HashMap<>();
-        Booking paidBooking = null;
+        String paidBookingId = null;
 
         try {
             log.info("Received PayOS Webhook: {}", body);
-            
-            // Verify webhook data - SDK requires Map<String,Object>, NOT ObjectNode
+
+            // Verify webhook data - SDK requires Map<String,Object>
             vn.payos.model.webhooks.WebhookData data = payOS.webhooks().verify(body);
-            log.info("Webhook verified. code={}, orderCode={}, desc={}", 
-                data.getCode(), data.getOrderCode(), data.getDescription());
+            log.info("Webhook verified. code={}, orderCode={}, desc={}",
+                    data.getCode(), data.getOrderCode(), data.getDescription());
 
             if (!"00".equals(data.getCode())) {
                 log.warn("Webhook code {} is not success. Skipping.", data.getCode());
@@ -165,7 +166,7 @@ public class PaymentService {
 
             Long orderCode = data.getOrderCode();
 
-            // Ignore mock/test webhooks from PayOS dashboard
+            // Ignore mock/test webhooks
             if (orderCode == 123L || "test webhook".equalsIgnoreCase(data.getDescription())) {
                 log.info("Received test webhook. Ignoring.");
                 response.put("error", 0);
@@ -173,35 +174,9 @@ public class PaymentService {
                 return response;
             }
 
-            Optional<PaymentTransaction> txOpt = transactionRepository.findByOrderCode(orderCode);
-            if (txOpt.isEmpty()) {
-                log.error("Webhook for unknown orderCode: {}", orderCode);
-                response.put("error", 0);
-                response.put("message", "Order not found");
-                return response;
-            }
+            // Phase 1: Update DB status in its own @Transactional
+            paidBookingId = markTransactionAndBookingAsPaid(orderCode, data.getReference());
 
-            PaymentTransaction tx = txOpt.get();
-            if (tx.getStatus() == TransactionStatus.PAID) {
-                log.info("Transaction {} already PAID. Ignoring duplicate webhook.", orderCode);
-                response.put("error", 0);
-                response.put("message", "Ok");
-                return response;
-            }
-
-            // 1. Update Transaction Status
-            tx.setStatus(TransactionStatus.PAID);
-            tx.setPayosTransactionId(data.getReference());
-            transactionRepository.save(tx);
-            log.info("Updated Transaction {} to PAID", orderCode);
-
-            // 2. Update Booking Status
-            Booking booking = tx.getBooking();
-            booking.setStatus(BookingStatus.PAID);
-            bookingRepository.save(booking);
-            log.info("Updated Booking {} to PAID", booking.getId());
-
-            paidBooking = booking;
             response.put("error", 0);
             response.put("message", "Ok");
 
@@ -211,17 +186,51 @@ public class PaymentService {
             response.put("message", "Webhook handling failed: " + e.getMessage());
         }
 
-        // 3. Post-payment processing AFTER the main transaction committed
-        if (paidBooking != null) {
+        // Phase 2: Enrollment in its own REQUIRES_NEW transaction
+        // This runs AFTER Phase 1 transaction has committed to DB
+        if (paidBookingId != null) {
             try {
-                processPostPayment(paidBooking);
+                Booking freshBooking = bookingRepository.findById(paidBookingId)
+                        .orElseThrow(() -> new RuntimeException("Booking not found after payment: " + paidBookingId));
+                enrollmentService.enrollAfterPayment(freshBooking);
             } catch (Exception e) {
-                log.error("processPostPayment failed for booking {}. PAID status is already saved. Error: {}", 
-                    paidBooking.getId(), e.getMessage(), e);
+                log.error("enrollAfterPayment failed for booking {}. PAID status is already saved. Error: {}",
+                        paidBookingId, e.getMessage(), e);
             }
         }
 
         return response;
+    }
+
+    /**
+     * Phase 1: Atomically update Transaction + Booking status to PAID.
+     * Returns bookingId if updated, null if already PAID or not found.
+     */
+    @Transactional
+    String markTransactionAndBookingAsPaid(Long orderCode, String reference) {
+        Optional<PaymentTransaction> txOpt = transactionRepository.findByOrderCode(orderCode);
+        if (txOpt.isEmpty()) {
+            log.error("No transaction found for orderCode: {}", orderCode);
+            return null;
+        }
+
+        PaymentTransaction tx = txOpt.get();
+        if (tx.getStatus() == TransactionStatus.PAID) {
+            log.info("Transaction {} already PAID. Ignoring.", orderCode);
+            return null;
+        }
+
+        tx.setStatus(TransactionStatus.PAID);
+        tx.setPayosTransactionId(reference);
+        transactionRepository.save(tx);
+        log.info("Transaction {} → PAID", orderCode);
+
+        Booking booking = tx.getBooking();
+        booking.setStatus(BookingStatus.PAID);
+        bookingRepository.save(booking);
+        log.info("Booking {} → PAID", booking.getId());
+
+        return booking.getId();
     }
 
     private void processPostPayment(Booking booking) {
@@ -295,7 +304,6 @@ public class PaymentService {
         log.info("Proactively verifying payment for orderCode: {}", orderCode);
         
         try {
-            // In v2.0.1, the method is paymentRequests().get(orderCode)
             var data = payOS.paymentRequests().get(orderCode);
             log.info("PayOS status for order {}: {}", orderCode, data.getStatus());
 
@@ -304,27 +312,35 @@ public class PaymentService {
                 if (txOpt.isPresent()) {
                     PaymentTransaction tx = txOpt.get();
                     if (tx.getStatus() != TransactionStatus.PAID) {
-                        log.info("Proactive check: Order {} is PAID on PayOS. Updating local DB...", orderCode);
-                        
-                        // 1. Update Transaction
+                        log.info("Proactive check: Order {} is PAID. Updating local DB...", orderCode);
+
                         tx.setStatus(TransactionStatus.PAID);
                         transactionRepository.save(tx);
 
-                        // 2. Update Booking
                         Booking booking = tx.getBooking();
                         if (booking.getStatus() != BookingStatus.PAID) {
                             booking.setStatus(BookingStatus.PAID);
                             bookingRepository.save(booking);
-                            
-                            // 3. Post-payment
-                            processPostPayment(booking);
-                            log.info("Proactive check: Successfully updated Booking {} to PAID", booking.getId());
+                            log.info("Proactive check: Booking {} updated to PAID", booking.getId());
+
+                            // Enrollment in separate transaction
+                            try {
+                                enrollmentService.enrollAfterPayment(booking);
+                            } catch (Exception e) {
+                                log.error("enrollAfterPayment failed during proactive verify: {}", e.getMessage(), e);
+                            }
                         }
+                    } else {
+                        log.info("Order {} already PAID in DB. No update needed.", orderCode);
                     }
+                } else {
+                    log.error("Proactive verify: No transaction found for orderCode={}", orderCode);
                 }
+            } else {
+                log.info("Proactive verify: PayOS status={} for order {}. Not PAID yet.", data.getStatus(), orderCode);
             }
         } catch (Exception e) {
-            log.error("Error during proactive payment verification for order {}", orderCode, e);
+            log.error("Error during proactive payment verification for order {}: {}", orderCode, e.getMessage(), e);
             throw new RuntimeException("Không thể xác minh thanh toán: " + e.getMessage());
         }
     }
