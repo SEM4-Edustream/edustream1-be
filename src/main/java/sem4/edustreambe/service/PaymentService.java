@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import sem4.edustreambe.dto.payment.response.PaymentLinkResponse;
 import sem4.edustreambe.entity.*;
 import sem4.edustreambe.enums.BookingStatus;
+import sem4.edustreambe.enums.NotificationType;
 import sem4.edustreambe.enums.TransactionStatus;
 import sem4.edustreambe.exception.AppException;
 import sem4.edustreambe.exception.ErrorCode;
@@ -39,6 +40,7 @@ public class PaymentService {
     EnrollmentRepository enrollmentRepository;
     EmailService emailService;
     NotificationService notificationService;
+
 
     @org.springframework.beans.factory.annotation.Value("${app.frontend.url:http://localhost:3000}")
     @lombok.experimental.NonFinal
@@ -206,6 +208,17 @@ public class PaymentService {
                     enrollmentRepository.save(enrollment);
                     log.info("Auto-enrolled user {} to course {} upon successful PayOS payment.",
                             booking.getUser().getUsername(), course.getTitle());
+
+                    // Gửi Welcome Message từ Course (nếu có)
+                    if (course.getWelcomeMessage() != null && !course.getWelcomeMessage().isBlank()) {
+                        notificationService.sendNotification(
+                                booking.getUser(),
+                                "Welcome to " + course.getTitle(),
+                                course.getWelcomeMessage(),
+                                sem4.edustreambe.enums.NotificationType.COURSE_UPDATE,
+                                "/course/" + course.getId() + "/learn"
+                        );
+                    }
                 }
             }
 

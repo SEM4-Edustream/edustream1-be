@@ -5,5 +5,6 @@ public enum NotificationType {
     ENROLLMENT,  // Đăng ký khóa học
     PAYMENT,     // Thanh toán
     Q_AND_A,     // Hỏi đáp (Tutor trả lời)
-    ANNOUNCEMENT // Thông báo từ Giảng viên gửi cho toàn khóa học
+    ANNOUNCEMENT, // Thông báo từ Giảng viên gửi cho toàn khóa học
+    COURSE_UPDATE // Cập nhật/Tin nhắn từ khóa học
 }

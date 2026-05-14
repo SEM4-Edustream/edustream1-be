@@ -22,6 +22,7 @@ public class ProgressService {
     LessonRepository lessonRepository;
     LessonProgressRepository lessonProgressRepository;
     EnrollmentRepository enrollmentRepository;
+    NotificationService notificationService;
 
     private User getCurrentUser() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -63,6 +64,20 @@ public class ProgressService {
         } else {
             long completedLessons = lessonProgressRepository.countByUserAndLesson_Module_CourseAndIsCompletedTrue(student, course);
             int newPercentage = (int) ((completedLessons * 100) / totalLessons);
+            
+            // Nếu vừa hoàn thành khóa học (từ dưới 100% lên 100%)
+            if (enrollment.getProgressPercentage() < 100 && newPercentage >= 100) {
+                if (course.getCongratulationsMessage() != null && !course.getCongratulationsMessage().isBlank()) {
+                    notificationService.sendNotification(
+                            student,
+                            "Course Completed: " + course.getTitle(),
+                            course.getCongratulationsMessage(),
+                            sem4.edustreambe.enums.NotificationType.COURSE_UPDATE,
+                            "/course/" + course.getId() + "/learn"
+                    );
+                }
+            }
+            
             enrollment.setProgressPercentage(Math.min(newPercentage, 100));
         }
         enrollmentRepository.save(enrollment);

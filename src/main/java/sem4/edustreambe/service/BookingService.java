@@ -37,6 +37,7 @@ public class BookingService {
     CartItemRepository cartItemRepository;
     BookingMapper bookingMapper;
     CartService cartService;
+    NotificationService notificationService;
 
     private User getCurrentUser() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -93,6 +94,17 @@ public class BookingService {
                     .progressPercentage(0)
                     .build();
             enrollmentRepository.save(enrollment);
+
+            // Gửi Welcome Message từ Course (nếu có)
+            if (course.getWelcomeMessage() != null && !course.getWelcomeMessage().isBlank()) {
+                notificationService.sendNotification(
+                        student,
+                        "Welcome to " + course.getTitle(),
+                        course.getWelcomeMessage(),
+                        sem4.edustreambe.enums.NotificationType.COURSE_UPDATE,
+                        "/course/" + course.getId() + "/learn"
+                );
+            }
         }
 
         Booking saved = bookingRepository.save(booking);
@@ -156,6 +168,17 @@ public class BookingService {
                             .progressPercentage(0)
                             .build();
                     enrollmentRepository.save(enrollment);
+
+                    // Gửi Welcome Message từ Course (nếu có)
+                    if (item.getCourse().getWelcomeMessage() != null && !item.getCourse().getWelcomeMessage().isBlank()) {
+                        notificationService.sendNotification(
+                                student,
+                                "Welcome to " + item.getCourse().getTitle(),
+                                item.getCourse().getWelcomeMessage(),
+                                sem4.edustreambe.enums.NotificationType.COURSE_UPDATE,
+                                "/course/" + item.getCourse().getId() + "/learn"
+                        );
+                    }
                 }
             }
         }
