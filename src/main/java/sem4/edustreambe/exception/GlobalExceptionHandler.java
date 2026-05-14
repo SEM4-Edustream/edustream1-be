@@ -10,6 +10,7 @@ import sem4.edustreambe.dto.common.ApiResponse;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 
 @ControllerAdvice
 @Slf4j
