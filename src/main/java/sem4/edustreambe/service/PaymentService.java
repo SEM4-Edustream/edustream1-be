@@ -138,125 +138,134 @@ public class PaymentService {
     }
 
     @Transactional
-    @SuppressWarnings("unchecked")
     public com.fasterxml.jackson.databind.node.ObjectNode handlePayOSWebhook(
             com.fasterxml.jackson.databind.node.ObjectNode body) {
         com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
         com.fasterxml.jackson.databind.node.ObjectNode response = mapper.createObjectNode();
 
         try {
-            // Verify webhook data and extract payment info using SDK v2
+            log.info("Received PayOS Webhook: {}", body.toString());
+            
+            // Verify webhook data
             vn.payos.model.webhooks.WebhookData data = payOS.webhooks().verify(body);
+            log.info("Webhook verified successfully. Data: {}", data.toString());
 
             if (!"00".equals(data.getCode())) {
-                log.warn("Webhook received code {}, ignoring.", data.getCode());
+                log.warn("Webhook received code {}, which is not success (00). Data: {}", data.getCode(), data.toString());
                 response.put("error", 0);
                 response.put("message", "Ok");
-                response.set("data", null);
                 return response;
             }
 
             Long orderCode = data.getOrderCode();
+            log.info("Processing orderCode: {}", orderCode);
 
             // Check if mock order code from PayOS test webhook dashboard
             if (String.valueOf(orderCode).equals("123") || "test webhook".equalsIgnoreCase(data.getDescription())) {
-                log.info("Received mock webhook from PayOS. Returning 200 OK.");
+                log.info("Received mock/test webhook from PayOS dashboard.");
                 response.put("error", 0);
                 response.put("message", "Ok");
-                response.set("data", null);
                 return response;
             }
 
             Optional<PaymentTransaction> txOpt = transactionRepository.findByOrderCode(orderCode);
             if (txOpt.isEmpty()) {
-                log.warn("Webhook received for unknown orderCode {}. Ignored.", orderCode);
+                log.error("CRITICAL: Webhook received for unknown orderCode {}. This should not happen if the order was created locally.", orderCode);
                 response.put("error", 0);
-                response.put("message", "Ok");
-                response.set("data", null);
+                response.put("message", "Order not found but returning Ok to PayOS");
                 return response;
             }
 
             PaymentTransaction tx = txOpt.get();
-
             if (tx.getStatus() == TransactionStatus.PAID) {
+                log.info("Transaction {} already marked as PAID. Ignoring.", orderCode);
                 response.put("error", 0);
                 response.put("message", "Ok");
-                response.set("data", null);
                 return response;
             }
 
-            // Update Transaction
+            // 1. Update Transaction Status
             tx.setStatus(TransactionStatus.PAID);
             tx.setPayosTransactionId(data.getReference());
             transactionRepository.save(tx);
+            log.info("Updated Transaction {} to PAID", orderCode);
 
-            // Update Booking
+            // 2. Update Booking Status
             Booking booking = tx.getBooking();
             booking.setStatus(BookingStatus.PAID);
             bookingRepository.save(booking);
+            log.info("Updated Booking {} to PAID", booking.getId());
 
-            // Create Enrollment for ALL courses in the booking
-            for (BookingItem item : booking.getItems()) {
-                Course course = item.getCourse();
-                if (!enrollmentRepository.existsByUserIdAndCourseId(booking.getUser().getId(), course.getId())) {
-                    Enrollment enrollment = Enrollment.builder()
-                            .user(booking.getUser())
-                            .course(course)
-                            .enrolledAt(LocalDateTime.now())
-                            .progressPercentage(0)
-                            .build();
-                    enrollmentRepository.save(enrollment);
-                    log.info("Auto-enrolled user {} to course {} upon successful PayOS payment.",
-                            booking.getUser().getUsername(), course.getTitle());
-
-                    // Gửi Welcome Message từ Course (nếu có)
-                    if (course.getWelcomeMessage() != null && !course.getWelcomeMessage().isBlank()) {
-                        notificationService.sendNotification(
-                                booking.getUser(),
-                                "Welcome to " + course.getTitle(),
-                                course.getWelcomeMessage(),
-                                sem4.edustreambe.enums.NotificationType.COURSE_UPDATE,
-                                "/course/" + course.getId() + "/learn"
-                        );
-                    }
-                }
-            }
-
-            // Gửi thông báo In-app về thanh toán thành công
-            notificationService.sendNotification(
-                booking.getUser(),
-                "Thanh toán thành công",
-                "Bạn đã thanh toán thành công " + booking.getAmount() + "đ cho đơn hàng #" + booking.getId(),
-                sem4.edustreambe.enums.NotificationType.PAYMENT,
-                "/my-learning"
-            );
-
-            // Send order confirmation email
+            // 3. Post-payment processing (Wrap in try-catch to avoid rolling back the payment status)
             try {
-                List<String> courseTitles = booking.getItems().stream()
-                        .map(item -> item.getCourse().getTitle())
-                        .toList();
-                emailService.sendOrderConfirmation(
-                        booking.getUser().getEmail(),
-                        booking.getUser().getFullName() != null ? booking.getUser().getFullName() : booking.getUser().getUsername(),
-                        courseTitles,
-                        booking.getAmount().doubleValue()
-                );
+                processPostPayment(booking);
             } catch (Exception e) {
-                log.error("Failed to send order confirmation email for booking {}", booking.getId(), e);
+                log.error("Post-payment processing failed for booking {}, but payment is kept as PAID. Error: {}", 
+                    booking.getId(), e.getMessage(), e);
             }
 
             response.put("error", 0);
             response.put("message", "Ok");
-            response.set("data", null);
             return response;
+
         } catch (Exception e) {
-            log.error("PayOS Webhook handling failed: {}", e.getMessage());
-            // PayOS requires 200 OK but we can return error in json wrapper
+            log.error("PayOS Webhook handling FAILED: {}", e.getMessage(), e);
             response.put("error", -1);
-            response.put("message", "Webhook verified failed or error: " + e.getMessage());
-            response.set("data", null);
+            response.put("message", "Webhook handling failed: " + e.getMessage());
             return response;
         }
+    }
+
+    private void processPostPayment(Booking booking) {
+        // Create Enrollment for ALL courses in the booking
+        for (BookingItem item : booking.getItems()) {
+            Course course = item.getCourse();
+            if (!enrollmentRepository.existsByUserIdAndCourseId(booking.getUser().getId(), course.getId())) {
+                Enrollment enrollment = Enrollment.builder()
+                        .user(booking.getUser())
+                        .course(course)
+                        .enrolledAt(LocalDateTime.now())
+                        .progressPercentage(0)
+                        .build();
+                enrollmentRepository.save(enrollment);
+                log.info("Auto-enrolled user {} to course {}", booking.getUser().getUsername(), course.getTitle());
+
+                // Welcome Notification
+                if (course.getWelcomeMessage() != null && !course.getWelcomeMessage().isBlank()) {
+                    notificationService.sendNotification(
+                            booking.getUser(),
+                            "Welcome to " + course.getTitle(),
+                            course.getWelcomeMessage(),
+                            sem4.edustreambe.enums.NotificationType.COURSE_UPDATE,
+                            "/course/" + course.getId() + "/learn"
+                    );
+                }
+            }
+        }
+
+        // General Payment Notification
+        notificationService.sendNotification(
+            booking.getUser(),
+            "Thanh toán thành công",
+            "Bạn đã thanh toán thành công cho đơn hàng #" + booking.getId(),
+            sem4.edustreambe.enums.NotificationType.PAYMENT,
+            "/my-learning"
+        );
+
+        // Confirmation Email
+        try {
+            List<String> courseTitles = booking.getItems().stream()
+                    .map(item -> item.getCourse().getTitle())
+                    .toList();
+            emailService.sendOrderConfirmation(
+                    booking.getUser().getEmail(),
+                    booking.getUser().getFullName() != null ? booking.getUser().getFullName() : booking.getUser().getUsername(),
+                    courseTitles,
+                    booking.getAmount().doubleValue()
+            );
+        } catch (Exception e) {
+            log.error("Email sending failed", e);
+        }
+    }
     }
 }
