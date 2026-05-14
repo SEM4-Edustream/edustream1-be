@@ -22,6 +22,7 @@ import vn.payos.PayOS;
 import vn.payos.model.v2.paymentRequests.CreatePaymentLinkRequest;
 import vn.payos.model.v2.paymentRequests.CreatePaymentLinkResponse;
 import vn.payos.model.v2.paymentRequests.PaymentLinkItem;
+import vn.payos.type.PaymentLinkData;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -287,7 +288,7 @@ public class PaymentService {
         log.info("Proactively verifying payment for orderCode: {}", orderCode);
         
         try {
-            vn.payos.model.v2.paymentRequests.PaymentLinkInformation data = payOS.paymentRequests().getPaymentLinkInformation(orderCode);
+            PaymentLinkData data = payOS.paymentRequests().getPaymentLinkInformation(orderCode);
             log.info("PayOS status for order {}: {}", orderCode, data.getStatus());
 
             if ("PAID".equals(data.getStatus())) {
