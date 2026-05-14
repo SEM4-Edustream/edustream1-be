@@ -22,7 +22,6 @@ import vn.payos.PayOS;
 import vn.payos.model.v2.paymentRequests.CreatePaymentLinkRequest;
 import vn.payos.model.v2.paymentRequests.CreatePaymentLinkResponse;
 import vn.payos.model.v2.paymentRequests.PaymentLinkItem;
-import vn.payos.type.PaymentLinkData;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -83,8 +82,8 @@ public class PaymentService {
             transactionRepository.save(pTx);
         }
 
-        // 2. Generate unique Order Code
-        Long orderCode = Long.parseLong(String.valueOf(System.currentTimeMillis()).substring(3, 12));
+        // 2. Generate unique Order Code (9 digits fits in Long and int, PayOS SDK v2.0.1 compatible)
+        long orderCode = Long.parseLong(String.valueOf(System.currentTimeMillis()).substring(3, 12));
         Long amount = booking.getAmount().longValue();
 
         // 3. Set Expiration Time (e.g., 30 minutes from now)
@@ -288,7 +287,8 @@ public class PaymentService {
         log.info("Proactively verifying payment for orderCode: {}", orderCode);
         
         try {
-            PaymentLinkData data = payOS.paymentRequests().getPaymentLinkInformation(orderCode);
+            // In v2.0.1, the method is paymentRequests().get(orderCode)
+            var data = payOS.paymentRequests().get(orderCode);
             log.info("PayOS status for order {}: {}", orderCode, data.getStatus());
 
             if ("PAID".equals(data.getStatus())) {
