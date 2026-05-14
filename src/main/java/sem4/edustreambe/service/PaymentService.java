@@ -24,7 +24,9 @@ import vn.payos.model.v2.paymentRequests.CreatePaymentLinkResponse;
 import vn.payos.model.v2.paymentRequests.PaymentLinkItem;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -142,31 +144,30 @@ public class PaymentService {
     }
 
     @Transactional
-    public com.fasterxml.jackson.databind.node.ObjectNode handlePayOSWebhook(
-            com.fasterxml.jackson.databind.node.ObjectNode body) {
-        com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-        com.fasterxml.jackson.databind.node.ObjectNode response = mapper.createObjectNode();
+    public Map<String, Object> handlePayOSWebhook(Map<String, Object> body) {
+        Map<String, Object> response = new HashMap<>();
+        Booking paidBooking = null;
 
         try {
-            log.info("Received PayOS Webhook: {}", body.toString());
+            log.info("Received PayOS Webhook: {}", body);
             
-            // Verify webhook data
+            // Verify webhook data - SDK requires Map<String,Object>, NOT ObjectNode
             vn.payos.model.webhooks.WebhookData data = payOS.webhooks().verify(body);
-            log.info("Webhook verified successfully. Data: {}", data.toString());
+            log.info("Webhook verified. code={}, orderCode={}, desc={}", 
+                data.getCode(), data.getOrderCode(), data.getDescription());
 
             if (!"00".equals(data.getCode())) {
-                log.warn("Webhook received code {}, which is not success (00). Data: {}", data.getCode(), data.toString());
+                log.warn("Webhook code {} is not success. Skipping.", data.getCode());
                 response.put("error", 0);
                 response.put("message", "Ok");
                 return response;
             }
 
             Long orderCode = data.getOrderCode();
-            log.info("Processing orderCode: {}", orderCode);
 
-            // Check if mock order code from PayOS test webhook dashboard
-            if (String.valueOf(orderCode).equals("123") || "test webhook".equalsIgnoreCase(data.getDescription())) {
-                log.info("Received mock/test webhook from PayOS dashboard.");
+            // Ignore mock/test webhooks from PayOS dashboard
+            if (orderCode == 123L || "test webhook".equalsIgnoreCase(data.getDescription())) {
+                log.info("Received test webhook. Ignoring.");
                 response.put("error", 0);
                 response.put("message", "Ok");
                 return response;
@@ -174,15 +175,15 @@ public class PaymentService {
 
             Optional<PaymentTransaction> txOpt = transactionRepository.findByOrderCode(orderCode);
             if (txOpt.isEmpty()) {
-                log.error("CRITICAL: Webhook received for unknown orderCode {}. This should not happen if the order was created locally.", orderCode);
+                log.error("Webhook for unknown orderCode: {}", orderCode);
                 response.put("error", 0);
-                response.put("message", "Order not found but returning Ok to PayOS");
+                response.put("message", "Order not found");
                 return response;
             }
 
             PaymentTransaction tx = txOpt.get();
             if (tx.getStatus() == TransactionStatus.PAID) {
-                log.info("Transaction {} already marked as PAID. Ignoring.", orderCode);
+                log.info("Transaction {} already PAID. Ignoring duplicate webhook.", orderCode);
                 response.put("error", 0);
                 response.put("message", "Ok");
                 return response;
@@ -200,20 +201,27 @@ public class PaymentService {
             bookingRepository.save(booking);
             log.info("Updated Booking {} to PAID", booking.getId());
 
-            // 3. Post-payment processing (Enrollment, Notifications, Email)
-            // Note: We run this inside the same transaction to ensure data consistency
-            processPostPayment(booking);
-
+            paidBooking = booking;
             response.put("error", 0);
             response.put("message", "Ok");
-            return response;
 
         } catch (Exception e) {
             log.error("PayOS Webhook handling FAILED: {}", e.getMessage(), e);
             response.put("error", -1);
             response.put("message", "Webhook handling failed: " + e.getMessage());
-            return response;
         }
+
+        // 3. Post-payment processing AFTER the main transaction committed
+        if (paidBooking != null) {
+            try {
+                processPostPayment(paidBooking);
+            } catch (Exception e) {
+                log.error("processPostPayment failed for booking {}. PAID status is already saved. Error: {}", 
+                    paidBooking.getId(), e.getMessage(), e);
+            }
+        }
+
+        return response;
     }
 
     private void processPostPayment(Booking booking) {

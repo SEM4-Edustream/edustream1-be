@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import sem4.edustreambe.service.PaymentService;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/webhooks/payos")
 @RequiredArgsConstructor
@@ -18,7 +20,7 @@ public class WebhookController {
     PaymentService paymentService;
 
     @PostMapping
-    public com.fasterxml.jackson.databind.node.ObjectNode handlePayOSWebhook(@RequestBody com.fasterxml.jackson.databind.node.ObjectNode body) {
+    public Map<String, Object> handlePayOSWebhook(@RequestBody Map<String, Object> body) {
         return paymentService.handlePayOSWebhook(body);
     }
 }
