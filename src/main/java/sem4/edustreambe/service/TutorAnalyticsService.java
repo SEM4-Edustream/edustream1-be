@@ -143,9 +143,7 @@ public class TutorAnalyticsService {
                 .pageSize(enrollmentPage.getSize())
                 .totalElements(enrollmentPage.getTotalElements())
                 .totalPages(enrollmentPage.getTotalPages())
-                .number(enrollmentPage.getNumber())
-                .first(enrollmentPage.isFirst())
-                .last(enrollmentPage.isLast())
+                .pageNumber(enrollmentPage.getNumber())
                 .build();
     }
 }
