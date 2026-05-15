@@ -20,7 +20,7 @@ public class NotificationDispatchService {
     NotificationRepository notificationRepository;
     NotificationService notificationService;
 
-    @Transactional
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
     public Notification dispatch(User user, String title, String message, NotificationType type, String referenceUrl) {
         Notification notification = Notification.builder()
                 .user(user)

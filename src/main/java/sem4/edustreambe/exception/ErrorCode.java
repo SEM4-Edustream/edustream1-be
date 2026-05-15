@@ -47,6 +47,7 @@ public enum ErrorCode {
     BOOKING_ALREADY_EXISTS(5004, "booking.already_exists", HttpStatus.BAD_REQUEST),
     ENROLLMENT_NOT_FOUND(5005, "enrollment.not_found", HttpStatus.FORBIDDEN),
     LESSON_ALREADY_COMPLETED(5006, "lesson.already_completed", HttpStatus.BAD_REQUEST),
+    ASSIGNMENT_SUBMISSION_NOT_FOUND(5007, "assignment_submission.not_found", HttpStatus.NOT_FOUND),
 
     // PAYMENT & TRANSACTION (60xx)
     PAYMENT_FAILED(6001, "payment.failed", HttpStatus.INTERNAL_SERVER_ERROR),

@@ -94,7 +94,7 @@ public class AssignmentService {
 
         // Verify tutor owns the course
         User tutor = getCurrentUser();
-        if (!lesson.getModule().getCourse().getTutorProfile().getUser().getId().equals(tutor.getId()) && !tutor.getRole().getName().equals("ROLE_ADMIN")) {
+        if (!lesson.getModule().getCourse().getTutorProfile().getUser().getId().equals(tutor.getId()) && !tutor.getRole().getName().equals(sem4.edustreambe.constant.PredefinedRole.ADMIN_ROLE)) {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
 
@@ -113,11 +113,11 @@ public class AssignmentService {
 
     public AssignmentSubmissionResponse gradeSubmission(String submissionId, AssignmentGradeRequest request) {
         AssignmentSubmission submission = assignmentSubmissionRepository.findById(submissionId)
-                .orElseThrow(() -> new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION)); // Assignment submission not found
+                .orElseThrow(() -> new AppException(ErrorCode.ASSIGNMENT_SUBMISSION_NOT_FOUND));
 
         // Verify tutor owns the course
         User tutor = getCurrentUser();
-        if (!submission.getLesson().getModule().getCourse().getTutorProfile().getUser().getId().equals(tutor.getId()) && !tutor.getRole().getName().equals("ROLE_ADMIN")) {
+        if (!submission.getLesson().getModule().getCourse().getTutorProfile().getUser().getId().equals(tutor.getId()) && !tutor.getRole().getName().equals(sem4.edustreambe.constant.PredefinedRole.ADMIN_ROLE)) {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
 
