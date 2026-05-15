@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import sem4.edustreambe.dto.common.ApiResponse;
 import sem4.edustreambe.dto.tutor.response.TutorAnalyticsResponse;
+import sem4.edustreambe.dto.tutor.response.TutorStudentResponse;
 import sem4.edustreambe.service.TutorAnalyticsService;
 
 @RestController
