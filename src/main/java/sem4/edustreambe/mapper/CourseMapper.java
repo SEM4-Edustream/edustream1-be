@@ -36,6 +36,7 @@ public interface CourseMapper {
 
     @Mapping(target = "tutorProfileId", source = "tutorProfile.id")
     @Mapping(target = "tutorName", source = "tutorProfile.user.fullName")
+    @Mapping(target = "tutorAvatar", source = "tutorProfile.user.avatarUrl")
     @Mapping(target = "category", source = "category")
     @Mapping(target = "modules", source = "modules")
     CourseResponse toCourseResponse(Course course);

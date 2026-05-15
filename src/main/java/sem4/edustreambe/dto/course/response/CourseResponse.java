@@ -17,6 +17,7 @@ public class CourseResponse {
     String id;
     String tutorProfileId;
     String tutorName;
+    String tutorAvatar;
     String title;
     String subtitle;
     String description;
