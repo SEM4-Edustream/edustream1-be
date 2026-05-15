@@ -8,11 +8,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import sem4.edustreambe.dto.common.ApiResponse;
+import sem4.edustreambe.dto.common.PageMeta;
 import sem4.edustreambe.dto.tutor.response.TutorAnalyticsResponse;
 import sem4.edustreambe.dto.tutor.response.TutorReviewResponse;
 import sem4.edustreambe.dto.tutor.response.TutorStudentResponse;
 import sem4.edustreambe.service.TutorAnalyticsService;
-import sem4.edustreambe.dto.common.PageResponse;
 
 @RestController
 @RequestMapping("/api/tutor/analytics")
@@ -31,7 +31,7 @@ public class TutorAnalyticsController {
     }
 
     @GetMapping("/students")
-    public ApiResponse<sem4.edustreambe.dto.common.PageMeta<TutorStudentResponse>> getTutorStudents(
+    public ApiResponse<PageMeta<TutorStudentResponse>> getTutorStudents(
             @org.springframework.web.bind.annotation.RequestParam(required = false) String courseId,
             @org.springframework.web.bind.annotation.RequestParam(defaultValue = "0") int page,
             @org.springframework.web.bind.annotation.RequestParam(defaultValue = "10") int size) {
@@ -39,20 +39,20 @@ public class TutorAnalyticsController {
         org.springframework.data.domain.Pageable pageable = 
                 org.springframework.data.domain.PageRequest.of(page, size, org.springframework.data.domain.Sort.by("enrolledAt").descending());
                 
-        return ApiResponse.<sem4.edustreambe.dto.common.PageMeta<TutorStudentResponse>>builder()
+        return ApiResponse.<PageMeta<TutorStudentResponse>>builder()
                 .result(tutorAnalyticsService.getTutorStudents(courseId, pageable))
                 .build();
     }
 
     @GetMapping("/reviews")
-    public ApiResponse<PageResponse<TutorReviewResponse>> getTutorReviews(
+    public ApiResponse<PageMeta<TutorReviewResponse>> getTutorReviews(
             @org.springframework.web.bind.annotation.RequestParam(defaultValue = "0") int page,
             @org.springframework.web.bind.annotation.RequestParam(defaultValue = "10") int size) {
         
         org.springframework.data.domain.Pageable pageable = 
                 org.springframework.data.domain.PageRequest.of(page, size, org.springframework.data.domain.Sort.by("createdAt").descending());
                 
-        return ApiResponse.<PageResponse<TutorReviewResponse>>builder()
+        return ApiResponse.<PageMeta<TutorReviewResponse>>builder()
                 .result(tutorAnalyticsService.getTutorReviews(pageable))
                 .build();
     }

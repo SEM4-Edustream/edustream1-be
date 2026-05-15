@@ -10,8 +10,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import sem4.edustreambe.dto.common.PageMeta;
 import sem4.edustreambe.dto.tutor.response.TutorAnalyticsResponse;
+import sem4.edustreambe.dto.tutor.response.TutorReviewResponse;
 import sem4.edustreambe.dto.tutor.response.TutorStudentResponse;
 import sem4.edustreambe.entity.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import sem4.edustreambe.exception.AppException;
 import sem4.edustreambe.exception.ErrorCode;
 import sem4.edustreambe.repository.*;
@@ -213,7 +216,7 @@ public class TutorAnalyticsService {
                 .build();
     }
 
-    public PageResponse<TutorReviewResponse> getTutorReviews(Pageable pageable) {
+    public PageMeta<TutorReviewResponse> getTutorReviews(Pageable pageable) {
         String tutorId = securityUtils.getCurrentTutorProfileId();
         Page<CourseReview> reviewPage = courseReviewRepository.findByCourseTutorProfileId(tutorId, pageable);
 
@@ -230,14 +233,12 @@ public class TutorAnalyticsService {
                         .build())
                 .toList();
 
-        return PageResponse.<TutorReviewResponse>builder()
-                .data(reviews)
-                .meta(PageMeta.builder()
-                        .totalElements(reviewPage.getTotalElements())
-                        .totalPages(reviewPage.getTotalPages())
-                        .size(reviewPage.getSize())
-                        .number(reviewPage.getNumber())
-                        .build())
+        return PageMeta.<TutorReviewResponse>builder()
+                .content(reviews)
+                .totalElements(reviewPage.getTotalElements())
+                .totalPages(reviewPage.getTotalPages())
+                .pageSize(reviewPage.getSize())
+                .pageNumber(reviewPage.getNumber())
                 .build();
     }
 }
