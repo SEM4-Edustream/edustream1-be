@@ -15,4 +15,7 @@ public interface CourseReviewRepository extends JpaRepository<CourseReview, Stri
     Page<CourseReview> findByCourseId(String courseId, Pageable pageable);
     Optional<CourseReview> findByUserIdAndCourseId(UUID userId, String courseId);
     boolean existsByUserIdAndCourseId(UUID userId, String courseId);
+
+    @org.springframework.data.jpa.repository.Query("SELECT COALESCE(AVG(cr.rating), 0) FROM CourseReview cr WHERE cr.course.tutorProfile.id = :tutorProfileId")
+    Double getAverageRatingByTutor(@org.springframework.data.repository.query.Param("tutorProfileId") String tutorProfileId);
 }

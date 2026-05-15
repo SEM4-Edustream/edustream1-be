@@ -15,4 +15,10 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, String> 
     List<Enrollment> findByCourseId(String courseId);
     boolean existsByUserIdAndCourseId(UUID userId, String courseId);
     Optional<Enrollment> findByUserIdAndCourseId(UUID userId, String courseId);
+
+    @org.springframework.data.jpa.repository.Query("SELECT COUNT(DISTINCT e.user.id) FROM Enrollment e WHERE e.course.tutorProfile.id = :tutorProfileId")
+    long countUniqueStudentsByTutor(@org.springframework.data.repository.query.Param("tutorProfileId") String tutorProfileId);
+
+    @org.springframework.data.jpa.repository.Query("SELECT COALESCE(AVG(e.progressPercentage), 0) FROM Enrollment e WHERE e.course.tutorProfile.id = :tutorProfileId")
+    Double getAverageProgressByTutor(@org.springframework.data.repository.query.Param("tutorProfileId") String tutorProfileId);
 }
