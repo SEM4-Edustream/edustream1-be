@@ -217,7 +217,8 @@ public class TutorAnalyticsService {
     }
 
     public PageMeta<TutorReviewResponse> getTutorReviews(Pageable pageable) {
-        String tutorId = securityUtils.getCurrentTutorProfileId();
+        TutorProfile tutorProfile = getCurrentTutorProfile();
+        String tutorId = tutorProfile.getId();
         Page<CourseReview> reviewPage = courseReviewRepository.findByCourseTutorProfileId(tutorId, pageable);
 
         List<TutorReviewResponse> reviews = reviewPage.getContent().stream()
@@ -225,7 +226,7 @@ public class TutorAnalyticsService {
                         .id(review.getId())
                         .courseId(review.getCourse().getId())
                         .courseTitle(review.getCourse().getTitle())
-                        .studentName(review.getUser().getFirstName() + " " + review.getUser().getLastName())
+                        .studentName(review.getUser().getFullName())
                         .studentAvatar(review.getUser().getAvatarUrl())
                         .rating(review.getRating())
                         .comment(review.getComment())
