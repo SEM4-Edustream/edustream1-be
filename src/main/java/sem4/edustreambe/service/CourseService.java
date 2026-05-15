@@ -46,7 +46,7 @@ public class CourseService {
     final CourseModuleRepository moduleRepository;
     final LessonRepository lessonRepository;
     final CourseMapper courseMapper;
-    final NotificationService notificationService;
+    final NotificationDispatchService notificationDispatchService;
 
     private User getCurrentUser() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -407,14 +407,15 @@ public class CourseService {
                 : "Rất tiếc, khóa học '" + course.getTitle() + "' của bạn đã bị từ chối phê duyệt. Vui lòng kiểm tra lại nội dung.";
 
         try {
-            notificationService.sendNotification(
-                    course.getTutorProfile().getUser(),
+            var tutorUser = course.getTutorProfile().getUser();
+            var savedNotification = notificationDispatchService.dispatch(
+                    tutorUser,
                     title,
                     message,
                     sem4.edustreambe.enums.NotificationType.COURSE_STATUS,
                     "/tutor/dashboard/manage/" + course.getId()
             );
-            log.info("Course status notification queued for course {} and tutor {}", course.getId(), course.getTutorProfile().getUser().getUsername());
+            log.info("Course status notification saved with id {} for course {} and tutor {}", savedNotification.getId(), course.getId(), tutorUser.getUsername());
         } catch (Exception e) {
             log.error("Failed to send course review notification for course {}: {}", course.getId(), e.getMessage(), e);
         }

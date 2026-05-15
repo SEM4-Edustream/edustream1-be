@@ -33,7 +33,10 @@ public class NotificationService {
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
     }
 
-    // Gửi thông báo cho 1 người dùng
+    /**
+     * Backward-compatible method used by existing services.
+     * Persists the notification and pushes realtime to the recipient.
+     */
     @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
     public void sendNotification(User user, String title, String message, NotificationType type, String referenceUrl) {
         try {
@@ -50,14 +53,36 @@ public class NotificationService {
                     .build();
             Notification savedNotification = notificationRepository.save(notification);
 
+            sendRealtimeNotification(
+                    attachedUser,
+                    savedNotification.getTitle(),
+                    savedNotification.getMessage(),
+                    savedNotification.getType(),
+                    savedNotification.getReferenceUrl(),
+                    savedNotification.getId(),
+                    savedNotification.getCreatedAt()
+            );
+
+            org.slf4j.LoggerFactory.getLogger(getClass()).info("Notification saved and sent to user {}: {}", attachedUser.getUsername(), title);
+        } catch (Exception e) {
+            org.slf4j.LoggerFactory.getLogger(getClass()).error("sendNotification failed for user {}: {}",
+                user.getUsername(), e.getMessage(), e);
+        }
+    }
+
+    public void sendRealtimeNotification(User user, String title, String message, NotificationType type, String referenceUrl, String notificationId, java.time.LocalDateTime createdAt) {
+        try {
+            User attachedUser = userRepository.findById(user.getId())
+                    .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
             sem4.edustreambe.dto.notification.NotificationResponse response = sem4.edustreambe.dto.notification.NotificationResponse.builder()
-                    .id(savedNotification.getId())
-                    .title(savedNotification.getTitle())
-                    .message(savedNotification.getMessage())
-                    .type(savedNotification.getType())
-                    .referenceUrl(savedNotification.getReferenceUrl())
-                    .isRead(savedNotification.getIsRead())
-                    .createdAt(savedNotification.getCreatedAt())
+                    .id(notificationId)
+                    .title(title)
+                    .message(message)
+                    .type(type)
+                    .referenceUrl(referenceUrl)
+                    .isRead(false)
+                    .createdAt(createdAt)
                     .build();
 
             messagingTemplate.convertAndSendToUser(
@@ -66,9 +91,9 @@ public class NotificationService {
                 response
             );
 
-            org.slf4j.LoggerFactory.getLogger(getClass()).info("Notification saved and sent to user {}: {}", attachedUser.getUsername(), title);
+            org.slf4j.LoggerFactory.getLogger(getClass()).info("Notification realtime pushed to user {}: {}", attachedUser.getUsername(), title);
         } catch (Exception e) {
-            org.slf4j.LoggerFactory.getLogger(getClass()).error("sendNotification failed for user {}: {}", 
+            org.slf4j.LoggerFactory.getLogger(getClass()).error("sendRealtimeNotification failed for user {}: {}",
                 user.getUsername(), e.getMessage(), e);
         }
     }
