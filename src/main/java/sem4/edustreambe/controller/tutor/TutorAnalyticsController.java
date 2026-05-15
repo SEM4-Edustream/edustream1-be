@@ -26,4 +26,18 @@ public class TutorAnalyticsController {
                 .result(tutorAnalyticsService.getTutorAnalytics())
                 .build();
     }
+
+    @GetMapping("/students")
+    public ApiResponse<sem4.edustreambe.dto.common.PageMeta<TutorStudentResponse>> getTutorStudents(
+            @org.springframework.web.bind.annotation.RequestParam(required = false) String courseId,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "0") int page,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "10") int size) {
+        
+        org.springframework.data.domain.Pageable pageable = 
+                org.springframework.data.domain.PageRequest.of(page, size, org.springframework.data.domain.Sort.by("enrolledAt").descending());
+                
+        return ApiResponse.<sem4.edustreambe.dto.common.PageMeta<TutorStudentResponse>>builder()
+                .result(tutorAnalyticsService.getTutorStudents(courseId, pageable))
+                .build();
+    }
 }

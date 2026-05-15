@@ -21,4 +21,10 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, String> 
 
     @org.springframework.data.jpa.repository.Query("SELECT COALESCE(AVG(e.progressPercentage), 0) FROM Enrollment e WHERE e.course.tutorProfile.id = :tutorProfileId")
     Double getAverageProgressByTutor(@org.springframework.data.repository.query.Param("tutorProfileId") String tutorProfileId);
+    @org.springframework.data.jpa.repository.Query("SELECT e FROM Enrollment e WHERE e.course.tutorProfile.id = :tutorId " +
+            "AND (:courseId IS NULL OR e.course.id = :courseId)")
+    org.springframework.data.domain.Page<Enrollment> findStudentsByTutorAndCourse(
+            @org.springframework.data.repository.query.Param("tutorId") String tutorId,
+            @org.springframework.data.repository.query.Param("courseId") String courseId,
+            org.springframework.data.domain.Pageable pageable);
 }

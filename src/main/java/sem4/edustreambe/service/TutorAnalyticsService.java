@@ -115,4 +115,36 @@ public class TutorAnalyticsService {
                 .averageRating(averageRating != null ? averageRating : 0.0)
                 .build();
     }
+
+    public sem4.edustreambe.dto.common.PageMeta<TutorStudentResponse> getTutorStudents(String courseId, org.springframework.data.domain.Pageable pageable) {
+        TutorProfile tutorProfile = getCurrentTutorProfile();
+        String tutorId = tutorProfile.getId();
+
+        org.springframework.data.domain.Page<sem4.edustreambe.entity.Enrollment> enrollmentPage = 
+                enrollmentRepository.findStudentsByTutorAndCourse(tutorId, courseId, pageable);
+
+        List<TutorStudentResponse> students = enrollmentPage.getContent().stream()
+                .map(e -> TutorStudentResponse.builder()
+                        .enrollmentId(e.getId())
+                        .studentId(e.getUser().getId().toString())
+                        .fullName(e.getUser().getFullName())
+                        .email(e.getUser().getEmail())
+                        .avatarUrl(e.getUser().getAvatarUrl())
+                        .courseId(e.getCourse().getId())
+                        .courseTitle(e.getCourse().getTitle())
+                        .progressPercentage(e.getProgressPercentage())
+                        .enrolledAt(e.getEnrolledAt())
+                        .build())
+                .toList();
+
+        return sem4.edustreambe.dto.common.PageMeta.<TutorStudentResponse>builder()
+                .content(students)
+                .pageSize(enrollmentPage.getSize())
+                .totalElements(enrollmentPage.getTotalElements())
+                .totalPages(enrollmentPage.getTotalPages())
+                .number(enrollmentPage.getNumber())
+                .first(enrollmentPage.isFirst())
+                .last(enrollmentPage.isLast())
+                .build();
+    }
 }
