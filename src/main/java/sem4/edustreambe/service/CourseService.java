@@ -39,14 +39,14 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class CourseService {
 
-    UserRepository userRepository;
-    TutorProfileRepository tutorProfileRepository;
-    CourseRepository courseRepository;
-    CategoryRepository categoryRepository;
-    CourseModuleRepository moduleRepository;
-    LessonRepository lessonRepository;
-    CourseMapper courseMapper;
-    NotificationService notificationService;
+    final UserRepository userRepository;
+    final TutorProfileRepository tutorProfileRepository;
+    final CourseRepository courseRepository;
+    final CategoryRepository categoryRepository;
+    final CourseModuleRepository moduleRepository;
+    final LessonRepository lessonRepository;
+    final CourseMapper courseMapper;
+    final NotificationService notificationService;
 
     private User getCurrentUser() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -384,25 +384,34 @@ public class CourseService {
 
         if (isApprove) {
             course.setStatus(CourseStatus.PUBLISHED);
-            notificationService.sendNotification(
-                course.getTutorProfile().getUser(),
-                "Khóa học đã được phê duyệt",
-                "Chúc mừng! Khóa học '" + course.getTitle() + "' của bạn đã được phê duyệt và công khai trên hệ thống.",
-                sem4.edustreambe.enums.NotificationType.COURSE_STATUS,
-                "/tutor/dashboard/manage/" + courseId
-            );
         } else {
             course.setStatus(CourseStatus.REJECTED);
-            notificationService.sendNotification(
-                course.getTutorProfile().getUser(),
-                "Khóa học bị từ chối",
-                "Rất tiếc, khóa học '" + course.getTitle() + "' của bạn đã bị từ chối phê duyệt. Vui lòng kiểm tra lại nội dung.",
-                sem4.edustreambe.enums.NotificationType.COURSE_STATUS,
-                "/tutor/dashboard/manage/" + courseId
-            );
         }
 
-        return courseMapper.toCourseResponse(courseRepository.save(course));
+        Course savedCourse = courseRepository.save(course);
+
+        // Gửi thông báo cho Tutor sau khi cập nhật trạng thái
+        try {
+            if (savedCourse.getTutorProfile() != null && savedCourse.getTutorProfile().getUser() != null) {
+                String title = isApprove ? "Khóa học đã được phê duyệt" : "Khóa học bị từ chối";
+                String message = isApprove 
+                    ? "Chúc mừng! Khóa học '" + savedCourse.getTitle() + "' của bạn đã được phê duyệt và công khai trên hệ thống."
+                    : "Rất tiếc, khóa học '" + savedCourse.getTitle() + "' của bạn đã bị từ chối phê duyệt. Vui lòng kiểm tra lại nội dung.";
+                
+                notificationService.sendNotification(
+                    savedCourse.getTutorProfile().getUser(),
+                    title,
+                    message,
+                    sem4.edustreambe.enums.NotificationType.COURSE_STATUS,
+                    "/tutor/dashboard/manage/" + courseId
+                );
+            }
+        } catch (Exception e) {
+            log.error("Failed to send course review notification for course {}: {}", courseId, e.getMessage());
+            // Không ném ngoại lệ ở đây để đảm bảo giao dịch cập nhật trạng thái vẫn thành công
+        }
+
+        return courseMapper.toCourseResponse(savedCourse);
     }
 
     private void verifyCourseOwnership(Course course) {
