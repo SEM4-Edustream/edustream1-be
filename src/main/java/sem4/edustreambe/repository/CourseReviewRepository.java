@@ -18,4 +18,6 @@ public interface CourseReviewRepository extends JpaRepository<CourseReview, Stri
 
     @org.springframework.data.jpa.repository.Query("SELECT COALESCE(AVG(cr.rating), 0) FROM CourseReview cr WHERE cr.course.tutorProfile.id = :tutorProfileId")
     Double getAverageRatingByTutor(@org.springframework.data.repository.query.Param("tutorProfileId") String tutorProfileId);
+
+    java.util.List<CourseReview> findTop5ByCourseTutorProfileIdOrderByCreatedAtDesc(String tutorId);
 }

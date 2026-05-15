@@ -8,11 +8,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import sem4.edustreambe.dto.common.PageMeta;
 import sem4.edustreambe.dto.tutor.response.TutorAnalyticsResponse;
 import sem4.edustreambe.dto.tutor.response.TutorStudentResponse;
-import sem4.edustreambe.entity.Course;
-import sem4.edustreambe.entity.TutorProfile;
-import sem4.edustreambe.entity.User;
+import sem4.edustreambe.entity.*;
 import sem4.edustreambe.exception.AppException;
 import sem4.edustreambe.exception.ErrorCode;
 import sem4.edustreambe.repository.*;
@@ -22,7 +21,10 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.TemporalAdjusters;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional(readOnly = true)
@@ -54,10 +56,12 @@ public class TutorAnalyticsService {
         TutorProfile tutorProfile = getCurrentTutorProfile();
         String tutorId = tutorProfile.getId();
 
-        // 1. Total unique students
+        // 1. Basic Stats
         long totalStudents = enrollmentRepository.countUniqueStudentsByTutor(tutorId);
+        Double averageProgress = enrollmentRepository.getAverageProgressByTutor(tutorId);
+        Double averageRating = courseReviewRepository.getAverageRatingByTutor(tutorId);
 
-        // 2. Revenue (This month vs Last month)
+        // 2. Revenue Comparison
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime firstDayThisMonth = now.with(TemporalAdjusters.firstDayOfMonth()).with(LocalTime.MIN);
         LocalDateTime firstDayLastMonth = now.minusMonths(1).with(TemporalAdjusters.firstDayOfMonth()).with(LocalTime.MIN);
@@ -65,9 +69,11 @@ public class TutorAnalyticsService {
 
         BigDecimal revenueThisMonth = bookingItemRepository.sumRevenueByTutorAndDateRange(tutorId, firstDayThisMonth, now);
         BigDecimal revenueLastMonth = bookingItemRepository.sumRevenueByTutorAndDateRange(tutorId, firstDayLastMonth, lastDayLastMonth);
+        BigDecimal totalLifetimeRevenue = bookingItemRepository.sumTotalRevenueByTutor(tutorId);
 
         if (revenueThisMonth == null) revenueThisMonth = BigDecimal.ZERO;
         if (revenueLastMonth == null) revenueLastMonth = BigDecimal.ZERO;
+        if (totalLifetimeRevenue == null) totalLifetimeRevenue = BigDecimal.ZERO;
 
         BigDecimal revenueGrowth = BigDecimal.ZERO;
         if (revenueLastMonth.compareTo(BigDecimal.ZERO) > 0) {
@@ -76,52 +82,81 @@ public class TutorAnalyticsService {
                     .multiply(BigDecimal.valueOf(100));
         }
 
-        // 3. Top Course
-        List<Course> courses = courseRepository.findByTutorProfileId(tutorId);
-        String topCourseName = "N/A";
-        long topCourseEnrollments = 0;
+        // 3. Top 3 Courses
+        List<Course> myCourses = courseRepository.findByTutorProfileId(tutorId);
+        List<TutorAnalyticsResponse.CourseStat> topCourses = myCourses.stream()
+                .map(c -> {
+                    long enrollmentCount = enrollmentRepository.findByCourseId(c.getId()).size();
+                    Double avgRating = courseReviewRepository.findByCourseId(c.getId(), PageRequest.of(0, 100))
+                            .getContent().stream().mapToDouble(CourseReview::getRating).average().orElse(0.0);
+                    return TutorAnalyticsResponse.CourseStat.builder()
+                            .courseId(c.getId())
+                            .title(c.getTitle())
+                            .enrollmentCount(enrollmentCount)
+                            .averageRating(avgRating)
+                            .build();
+                })
+                .sorted(Comparator.comparingLong(TutorAnalyticsResponse.CourseStat::getEnrollmentCount).reversed())
+                .limit(3)
+                .collect(Collectors.toList());
+
+        // 4. Recent Activities
+        List<TutorAnalyticsResponse.ActivityLog> activities = new ArrayList<>();
         
-        if (!courses.isEmpty()) {
-            Course topCourse = null;
-            long maxEnrollments = -1;
-            
-            for (Course course : courses) {
-                long enrollmentCount = enrollmentRepository.findByCourseId(course.getId()).size();
-                if (enrollmentCount > maxEnrollments) {
-                    maxEnrollments = enrollmentCount;
-                    topCourse = course;
-                }
-            }
-            
-            if (topCourse != null) {
-                topCourseName = topCourse.getTitle();
-                topCourseEnrollments = maxEnrollments;
-            }
-        }
+        enrollmentRepository.findTop5ByCourseTutorProfileIdOrderByEnrolledAtDesc(tutorId).forEach(e -> 
+            activities.add(TutorAnalyticsResponse.ActivityLog.builder()
+                    .type("ENROLLMENT")
+                    .studentName(e.getUser().getFullName())
+                    .courseTitle(e.getCourse().getTitle())
+                    .detail("Đã đăng ký khóa học")
+                    .timestamp(e.getEnrolledAt())
+                    .build())
+        );
 
-        // 4. Average Progress
-        Double averageProgress = enrollmentRepository.getAverageProgressByTutor(tutorId);
+        courseReviewRepository.findTop5ByCourseTutorProfileIdOrderByCreatedAtDesc(tutorId).forEach(r -> 
+            activities.add(TutorAnalyticsResponse.ActivityLog.builder()
+                    .type("REVIEW")
+                    .studentName(r.getUser().getFullName())
+                    .courseTitle(r.getCourse().getTitle())
+                    .detail("Đã đánh giá " + r.getRating() + " sao")
+                    .timestamp(r.getCreatedAt())
+                    .build())
+        );
 
-        // 5. Average Rating
-        Double averageRating = courseReviewRepository.getAverageRatingByTutor(tutorId);
+        activities.sort(Comparator.comparing(TutorAnalyticsResponse.ActivityLog::getTimestamp).reversed());
+        List<TutorAnalyticsResponse.ActivityLog> recentActivities = activities.stream().limit(5).toList();
+
+        // 5. Revenue by Course
+        List<Object[]> revenueData = bookingItemRepository.getRevenueByCourse(tutorId);
+        List<TutorAnalyticsResponse.CourseRevenue> revenueByCourse = revenueData.stream()
+                .map(row -> TutorAnalyticsResponse.CourseRevenue.builder()
+                        .courseId((String) row[0])
+                        .title((String) row[1])
+                        .totalRevenue((BigDecimal) row[2])
+                        .totalSales((long) row[3])
+                        .build())
+                .sorted(Comparator.comparing(TutorAnalyticsResponse.CourseRevenue::getTotalRevenue).reversed())
+                .toList();
 
         return TutorAnalyticsResponse.builder()
                 .totalStudents(totalStudents)
                 .revenueThisMonth(revenueThisMonth)
                 .revenueLastMonth(revenueLastMonth)
                 .revenueGrowth(revenueGrowth)
-                .topCourseName(topCourseName)
-                .topCourseEnrollments(topCourseEnrollments)
+                .totalLifetimeRevenue(totalLifetimeRevenue)
                 .averageProgress(averageProgress != null ? averageProgress : 0.0)
                 .averageRating(averageRating != null ? averageRating : 0.0)
+                .topCourses(topCourses)
+                .recentActivities(recentActivities)
+                .revenueByCourse(revenueByCourse)
                 .build();
     }
 
-    public sem4.edustreambe.dto.common.PageMeta<TutorStudentResponse> getTutorStudents(String courseId, org.springframework.data.domain.Pageable pageable) {
+    public PageMeta<TutorStudentResponse> getTutorStudents(String courseId, org.springframework.data.domain.Pageable pageable) {
         TutorProfile tutorProfile = getCurrentTutorProfile();
         String tutorId = tutorProfile.getId();
 
-        org.springframework.data.domain.Page<sem4.edustreambe.entity.Enrollment> enrollmentPage = 
+        org.springframework.data.domain.Page<Enrollment> enrollmentPage = 
                 enrollmentRepository.findStudentsByTutorAndCourse(tutorId, courseId, pageable);
 
         List<TutorStudentResponse> students = enrollmentPage.getContent().stream()
@@ -138,7 +173,7 @@ public class TutorAnalyticsService {
                         .build())
                 .toList();
 
-        return sem4.edustreambe.dto.common.PageMeta.<TutorStudentResponse>builder()
+        return PageMeta.<TutorStudentResponse>builder()
                 .content(students)
                 .pageSize(enrollmentPage.getSize())
                 .totalElements(enrollmentPage.getTotalElements())

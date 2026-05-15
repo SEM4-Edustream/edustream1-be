@@ -19,4 +19,42 @@ public class TutorAnalyticsResponse {
     long topCourseEnrollments;
     double averageProgress;
     double averageRating;
+    BigDecimal totalLifetimeRevenue;
+    List<CourseStat> topCourses;
+    List<ActivityLog> recentActivities;
+    List<CourseRevenue> revenueByCourse;
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CourseStat {
+        String courseId;
+        String title;
+        long enrollmentCount;
+        double averageRating;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ActivityLog {
+        String type; // ENROLLMENT, REVIEW
+        String studentName;
+        String courseTitle;
+        String detail; // "Rated 5 stars", "Enrolled", etc.
+        java.time.LocalDateTime timestamp;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CourseRevenue {
+        String courseId;
+        String title;
+        BigDecimal totalRevenue;
+        long totalSales;
+    }
 }

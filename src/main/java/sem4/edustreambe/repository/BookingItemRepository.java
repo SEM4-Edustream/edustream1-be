@@ -15,4 +15,12 @@ public interface BookingItemRepository extends JpaRepository<BookingItem, String
             @org.springframework.data.repository.query.Param("tutorProfileId") String tutorProfileId, 
             @org.springframework.data.repository.query.Param("startDate") java.time.LocalDateTime startDate, 
             @org.springframework.data.repository.query.Param("endDate") java.time.LocalDateTime endDate);
+
+    @org.springframework.data.jpa.repository.Query("SELECT SUM(bi.price) FROM BookingItem bi WHERE bi.course.tutorProfile.id = :tutorProfileId AND bi.booking.status = 'PAID'")
+    java.math.BigDecimal sumTotalRevenueByTutor(@org.springframework.data.repository.query.Param("tutorProfileId") String tutorProfileId);
+
+    @org.springframework.data.jpa.repository.Query("SELECT bi.course.id, bi.course.title, SUM(bi.price), COUNT(bi.id) FROM BookingItem bi " +
+            "WHERE bi.course.tutorProfile.id = :tutorProfileId AND bi.booking.status = 'PAID' " +
+            "GROUP BY bi.course.id, bi.course.title")
+    java.util.List<Object[]> getRevenueByCourse(@org.springframework.data.repository.query.Param("tutorProfileId") String tutorProfileId);
 }

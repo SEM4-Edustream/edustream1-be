@@ -27,4 +27,6 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, String> 
             @org.springframework.data.repository.query.Param("tutorId") String tutorId,
             @org.springframework.data.repository.query.Param("courseId") String courseId,
             org.springframework.data.domain.Pageable pageable);
+
+    java.util.List<Enrollment> findTop5ByCourseTutorProfileIdOrderByEnrolledAtDesc(String tutorId);
 }
