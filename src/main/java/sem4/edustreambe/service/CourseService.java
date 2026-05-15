@@ -415,7 +415,21 @@ public class CourseService {
                 .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
 
         if (course.getStatus() != CourseStatus.PUBLISHED) {
-            throw new AppException(ErrorCode.COURSE_NOT_FOUND); // Ẩn lỗi để giả vờ khóa chưa tồn tại
+            boolean canPreview = false;
+            org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getName())) {
+                String currentUserId = auth.getName();
+                boolean isAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+                boolean isOwner = course.getTutorProfile().getUser().getId().equals(currentUserId);
+                
+                if (isAdmin || isOwner) {
+                    canPreview = true;
+                }
+            }
+
+            if (!canPreview) {
+                throw new AppException(ErrorCode.COURSE_NOT_FOUND); // Ẩn lỗi để giả vờ khóa chưa tồn tại
+            }
         }
 
         return courseMapper.toCourseResponse(course);
