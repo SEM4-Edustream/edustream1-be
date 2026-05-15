@@ -242,7 +242,13 @@ public class CourseService {
         lesson.setContent(request.getContent());
         lesson.setType(request.getType());
         lesson.setVideoUrl(request.getVideoUrl());
-        lesson.setDurationSeconds(request.getDurationSeconds());
+        
+        // Chống Race Condition: Chỉ đè duration nếu request gửi lên có giá trị (không null).
+        // Lambda update duration có thể xảy ra đồng thời với việc user update lesson.
+        if (request.getDurationSeconds() != null) {
+            lesson.setDurationSeconds(request.getDurationSeconds());
+        }
+        
         lesson.setOrderIndex(request.getOrderIndex());
 
         Lesson saved = lessonRepository.save(lesson);
