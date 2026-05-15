@@ -74,7 +74,7 @@ public class ProgressService {
                                 "Course Completed: " + course.getTitle(),
                                 course.getCongratulationsMessage(),
                                 sem4.edustreambe.enums.NotificationType.COURSE_UPDATE,
-                                "/course/" + course.getId() + "/learn"
+                                "/learning/" + course.getId()
                         );
                     }
                 } catch (Exception e) {

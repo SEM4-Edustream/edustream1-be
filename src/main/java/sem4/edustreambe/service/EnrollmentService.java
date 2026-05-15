@@ -30,6 +30,8 @@ public class EnrollmentService {
     UserRepository userRepository;
     EnrollmentRepository enrollmentRepository;
     BookingMapper bookingMapper;
+    NotificationService notificationService;
+    EmailService emailService;
 
     private User getCurrentUser() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -77,12 +79,55 @@ public class EnrollmentService {
                             .build();
                     enrollmentRepository.save(enrollment);
                     log.info("SUCCESS: Enrolled userId={} to courseId={} ({})", userId, courseId, course.getTitle());
+
+                    // 1. Welcome Notification from Course Messages
+                    try {
+                        if (course.getWelcomeMessage() != null && !course.getWelcomeMessage().isBlank()) {
+                            notificationService.sendNotification(
+                                    booking.getUser(),
+                                    "Welcome to " + course.getTitle(),
+                                    course.getWelcomeMessage(),
+                                    sem4.edustreambe.enums.NotificationType.COURSE_UPDATE,
+                                    "/learning/" + course.getId()
+                            );
+                        }
+                    } catch (Exception e) {
+                        log.error("Welcome notification failed for course {}", course.getTitle(), e);
+                    }
                 } else {
                     log.info("Already enrolled: userId={}, courseId={}", userId, courseId);
                 }
             } catch (Exception e) {
                 log.error("Failed to enroll for item in booking {}: {}", booking.getId(), e.getMessage(), e);
             }
+        }
+
+        // 2. General Payment Success Notification
+        try {
+            notificationService.sendNotification(
+                    booking.getUser(),
+                    "Thanh toán thành công",
+                    "Bạn đã đăng ký thành công các khóa học trong đơn hàng #" + booking.getId(),
+                    sem4.edustreambe.enums.NotificationType.PAYMENT,
+                    "/my-learning"
+            );
+        } catch (Exception e) {
+            log.error("Payment notification failed", e);
+        }
+
+        // 3. Send Order Confirmation Email
+        try {
+            java.util.List<String> courseTitles = booking.getItems().stream()
+                    .map(item -> item.getCourse().getTitle())
+                    .toList();
+            emailService.sendOrderConfirmation(
+                    booking.getUser().getEmail(),
+                    booking.getUser().getFullName() != null ? booking.getUser().getFullName() : booking.getUser().getUsername(),
+                    courseTitles,
+                    booking.getAmount().doubleValue()
+            );
+        } catch (Exception e) {
+            log.error("Email sending failed for booking {}", booking.getId(), e);
         }
 
         log.info("=== enrollAfterPayment END for Booking: {} ===", booking.getId());
