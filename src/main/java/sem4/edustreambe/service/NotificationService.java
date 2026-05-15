@@ -37,8 +37,12 @@ public class NotificationService {
     @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
     public void sendNotification(User user, String title, String message, NotificationType type, String referenceUrl) {
         try {
+            // Re-fetch user to ensure it's attached to the current transaction/session
+            User attachedUser = userRepository.findById(user.getId())
+                    .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
             Notification notification = Notification.builder()
-                    .user(user)
+                    .user(attachedUser)
                     .title(title)
                     .message(message)
                     .type(type)
@@ -59,10 +63,12 @@ public class NotificationService {
                     .build();
 
             messagingTemplate.convertAndSendToUser(
-                user.getUsername(),
+                attachedUser.getUsername(),
                 "/queue/notifications",
                 response
             );
+            
+            org.slf4j.LoggerFactory.getLogger(getClass()).info("Notification sent to user {}: {}", attachedUser.getUsername(), title);
         } catch (Exception e) {
             // Log but never throw — notification failure must NOT affect the caller's transaction
             org.slf4j.LoggerFactory.getLogger(getClass()).error("sendNotification failed for user {}: {}", 
