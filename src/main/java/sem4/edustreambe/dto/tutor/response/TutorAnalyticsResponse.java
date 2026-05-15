@@ -4,6 +4,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Data
 @Builder
@@ -15,8 +16,6 @@ public class TutorAnalyticsResponse {
     BigDecimal revenueThisMonth;
     BigDecimal revenueLastMonth;
     BigDecimal revenueGrowth; // Percentage
-    String topCourseName;
-    long topCourseEnrollments;
     double averageProgress;
     double averageRating;
     BigDecimal totalLifetimeRevenue;
