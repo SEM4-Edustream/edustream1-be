@@ -28,9 +28,10 @@ public class PublicCourseController {
     @Operation(summary = "Lấy danh sách tất cả các Khóa học đã được PUBLISHED (Mở bán)")
     public ApiResponse<org.springframework.data.domain.Page<CourseResponse>> getAllPublishedCourses(
             @org.springframework.web.bind.annotation.RequestParam(required = false) String keyword,
+            @org.springframework.web.bind.annotation.RequestParam(required = false) String category,
             @org.springdoc.core.annotations.ParameterObject org.springframework.data.domain.Pageable pageable) {
         return ApiResponse.<org.springframework.data.domain.Page<CourseResponse>>builder()
-                .result(courseService.getPublicCourses(keyword, pageable))
+                .result(courseService.getPublicCourses(keyword, category, pageable))
                 .build();
     }
 

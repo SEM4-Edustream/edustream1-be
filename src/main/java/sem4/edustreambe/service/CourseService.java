@@ -446,11 +446,24 @@ public class CourseService {
     // PUBLIC: COURSE BROWSING
     // ==========================================
 
-    public org.springframework.data.domain.Page<CourseResponse> getPublicCourses(String keyword, org.springframework.data.domain.Pageable pageable) {
-        if (keyword != null && !keyword.trim().isEmpty()) {
-            return courseRepository.findByStatusAndTitleContainingIgnoreCase(CourseStatus.PUBLISHED, keyword.trim(), pageable)
+    public org.springframework.data.domain.Page<CourseResponse> getPublicCourses(String keyword, String categorySlug, org.springframework.data.domain.Pageable pageable) {
+        boolean hasKeyword = keyword != null && !keyword.trim().isEmpty();
+        boolean hasCategory = categorySlug != null && !categorySlug.trim().isEmpty();
+
+        if (hasKeyword && hasCategory) {
+            return courseRepository.findByStatusAndCategorySlugAndTitleContainingIgnoreCase(
+                    CourseStatus.PUBLISHED, categorySlug.trim(), keyword.trim(), pageable)
+                    .map(courseMapper::toCourseResponse);
+        } else if (hasKeyword) {
+            return courseRepository.findByStatusAndTitleContainingIgnoreCase(
+                    CourseStatus.PUBLISHED, keyword.trim(), pageable)
+                    .map(courseMapper::toCourseResponse);
+        } else if (hasCategory) {
+            return courseRepository.findByStatusAndCategorySlug(
+                    CourseStatus.PUBLISHED, categorySlug.trim(), pageable)
                     .map(courseMapper::toCourseResponse);
         }
+
         return courseRepository.findByStatus(CourseStatus.PUBLISHED, pageable)
                 .map(courseMapper::toCourseResponse);
     }
