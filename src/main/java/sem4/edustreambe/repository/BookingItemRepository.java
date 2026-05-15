@@ -24,11 +24,11 @@ public interface BookingItemRepository extends JpaRepository<BookingItem, String
             "GROUP BY bi.course.id, bi.course.title")
     java.util.List<Object[]> getRevenueByCourse(@org.springframework.data.repository.query.Param("tutorProfileId") String tutorProfileId);
 
-    @org.springframework.data.jpa.repository.Query("SELECT FUNCTION('YEAR', bi.booking.createdAt), FUNCTION('MONTH', bi.booking.createdAt), SUM(bi.price) " +
+    @org.springframework.data.jpa.repository.Query("SELECT EXTRACT(YEAR FROM bi.booking.createdAt), EXTRACT(MONTH FROM bi.booking.createdAt), SUM(bi.price) " +
             "FROM BookingItem bi WHERE bi.course.tutorProfile.id = :tutorProfileId AND bi.booking.status = 'PAID' " +
             "AND bi.booking.createdAt >= :startDate " +
-            "GROUP BY FUNCTION('YEAR', bi.booking.createdAt), FUNCTION('MONTH', bi.booking.createdAt) " +
-            "ORDER BY FUNCTION('YEAR', bi.booking.createdAt) ASC, FUNCTION('MONTH', bi.booking.createdAt) ASC")
+            "GROUP BY EXTRACT(YEAR FROM bi.booking.createdAt), EXTRACT(MONTH FROM bi.booking.createdAt) " +
+            "ORDER BY EXTRACT(YEAR FROM bi.booking.createdAt) ASC, EXTRACT(MONTH FROM bi.booking.createdAt) ASC")
     java.util.List<Object[]> getMonthlyRevenue(@org.springframework.data.repository.query.Param("tutorProfileId") String tutorProfileId, 
                                                @org.springframework.data.repository.query.Param("startDate") java.time.LocalDateTime startDate);
 }

@@ -143,8 +143,8 @@ public class TutorAnalyticsService {
         List<Object[]> monthlyRevenueData = bookingItemRepository.getMonthlyRevenue(tutorId, twelveMonthsAgo);
         List<TutorAnalyticsResponse.ChartData> chartData = monthlyRevenueData.stream()
                 .map(row -> TutorAnalyticsResponse.ChartData.builder()
-                        .year((int) row[0])
-                        .month((int) row[1])
+                        .year(((Number) row[0]).intValue())
+                        .month(((Number) row[1]).intValue())
                         .revenue((BigDecimal) row[2])
                         .build())
                 .toList();
