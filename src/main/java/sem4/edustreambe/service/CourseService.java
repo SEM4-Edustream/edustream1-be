@@ -390,28 +390,30 @@ public class CourseService {
 
         Course savedCourse = courseRepository.save(course);
 
-        // Gửi thông báo cho Tutor sau khi cập nhật trạng thái
+        sendCourseStatusNotification(savedCourse, isApprove);
+
+        return courseMapper.toCourseResponse(savedCourse);
+    }
+
+    private void sendCourseStatusNotification(Course course, boolean isApprove) {
         try {
-            if (savedCourse.getTutorProfile() != null && savedCourse.getTutorProfile().getUser() != null) {
+            if (course.getTutorProfile() != null && course.getTutorProfile().getUser() != null) {
                 String title = isApprove ? "Khóa học đã được phê duyệt" : "Khóa học bị từ chối";
-                String message = isApprove 
-                    ? "Chúc mừng! Khóa học '" + savedCourse.getTitle() + "' của bạn đã được phê duyệt và công khai trên hệ thống."
-                    : "Rất tiếc, khóa học '" + savedCourse.getTitle() + "' của bạn đã bị từ chối phê duyệt. Vui lòng kiểm tra lại nội dung.";
-                
+                String message = isApprove
+                        ? "Chúc mừng! Khóa học '" + course.getTitle() + "' của bạn đã được phê duyệt và công khai trên hệ thống."
+                        : "Rất tiếc, khóa học '" + course.getTitle() + "' của bạn đã bị từ chối phê duyệt. Vui lòng kiểm tra lại nội dung.";
+
                 notificationService.sendNotification(
-                    savedCourse.getTutorProfile().getUser(),
-                    title,
-                    message,
-                    sem4.edustreambe.enums.NotificationType.COURSE_STATUS,
-                    "/tutor/dashboard/manage/" + courseId
+                        course.getTutorProfile().getUser(),
+                        title,
+                        message,
+                        sem4.edustreambe.enums.NotificationType.COURSE_STATUS,
+                        "/tutor/dashboard/manage/" + course.getId()
                 );
             }
         } catch (Exception e) {
-            log.error("Failed to send course review notification for course {}: {}", courseId, e.getMessage());
-            // Không ném ngoại lệ ở đây để đảm bảo giao dịch cập nhật trạng thái vẫn thành công
+            log.error("Failed to send course review notification for course {}: {}", course.getId(), e.getMessage());
         }
-
-        return courseMapper.toCourseResponse(savedCourse);
     }
 
     private void verifyCourseOwnership(Course course) {
@@ -444,8 +446,8 @@ public class CourseService {
             if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getName())) {
                 String currentUserId = auth.getName();
                 boolean isAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-                boolean isOwner = course.getTutorProfile().getUser().getId().equals(currentUserId);
-                
+                boolean isOwner = course.getTutorProfile().getUser().getId().toString().equals(currentUserId);
+
                 if (isAdmin || isOwner) {
                     canPreview = true;
                 }
