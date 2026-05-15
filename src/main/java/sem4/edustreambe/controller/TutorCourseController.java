@@ -103,6 +103,16 @@ public class TutorCourseController {
                 .build();
     }
 
+    @PutMapping("/{id}/modules/reorder")
+    public ApiResponse<Void> reorderModules(
+            @PathVariable String id,
+            @Valid @RequestBody List<sem4.edustreambe.dto.course.request.ReorderItemRequest> request) {
+        courseService.reorderModules(id, request);
+        return ApiResponse.<Void>builder()
+                .message("Modules reordered successfully")
+                .build();
+    }
+
     @PostMapping("/modules/{moduleId}/lessons")
     public ApiResponse<LessonResponse> addLesson(
             @PathVariable String moduleId,
@@ -129,6 +139,16 @@ public class TutorCourseController {
         courseService.deleteLesson(moduleId, lessonId);
         return ApiResponse.<Void>builder()
                 .message("Lesson deleted successfully")
+                .build();
+    }
+
+    @PutMapping("/modules/{moduleId}/lessons/reorder")
+    public ApiResponse<Void> reorderLessons(
+            @PathVariable String moduleId,
+            @Valid @RequestBody List<sem4.edustreambe.dto.course.request.ReorderItemRequest> request) {
+        courseService.reorderLessons(moduleId, request);
+        return ApiResponse.<Void>builder()
+                .message("Lessons reordered successfully")
                 .build();
     }
 

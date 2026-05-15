@@ -179,6 +179,26 @@ public class CourseService {
         moduleRepository.delete(module);
     }
 
+    @org.springframework.transaction.annotation.Transactional
+    public void reorderModules(String courseId, List<sem4.edustreambe.dto.course.request.ReorderItemRequest> requests) {
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
+
+        verifyCourseOwnership(course);
+        if (course.getStatus() == CourseStatus.PUBLISHED || course.getStatus() == CourseStatus.PENDING) {
+            throw new AppException(ErrorCode.INVALID_COURSE_STATUS);
+        }
+
+        for (sem4.edustreambe.dto.course.request.ReorderItemRequest req : requests) {
+            moduleRepository.findById(req.getId()).ifPresent(module -> {
+                if (module.getCourse().getId().equals(courseId)) {
+                    module.setOrderIndex(req.getOrderIndex());
+                    moduleRepository.save(module);
+                }
+            });
+        }
+    }
+
     // ==========================================
     // TUTOR: LESSON MANAGEMENT
     // ==========================================
@@ -247,6 +267,26 @@ public class CourseService {
         }
 
         lessonRepository.delete(lesson);
+    }
+
+    @org.springframework.transaction.annotation.Transactional
+    public void reorderLessons(String moduleId, List<sem4.edustreambe.dto.course.request.ReorderItemRequest> requests) {
+        CourseModule module = moduleRepository.findById(moduleId)
+                .orElseThrow(() -> new AppException(ErrorCode.MODULE_NOT_FOUND));
+
+        verifyCourseOwnership(module.getCourse());
+        if (module.getCourse().getStatus() == CourseStatus.PUBLISHED || module.getCourse().getStatus() == CourseStatus.PENDING) {
+            throw new AppException(ErrorCode.INVALID_COURSE_STATUS);
+        }
+
+        for (sem4.edustreambe.dto.course.request.ReorderItemRequest req : requests) {
+            lessonRepository.findById(req.getId()).ifPresent(lesson -> {
+                if (lesson.getModule().getId().equals(moduleId)) {
+                    lesson.setOrderIndex(req.getOrderIndex());
+                    lessonRepository.save(lesson);
+                }
+            });
+        }
     }
 
     // ==========================================
