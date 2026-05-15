@@ -46,6 +46,7 @@ public class CourseService {
     CourseModuleRepository moduleRepository;
     LessonRepository lessonRepository;
     CourseMapper courseMapper;
+    NotificationService notificationService;
 
     private User getCurrentUser() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -383,8 +384,22 @@ public class CourseService {
 
         if (isApprove) {
             course.setStatus(CourseStatus.PUBLISHED);
+            notificationService.sendNotification(
+                course.getTutorProfile().getUser(),
+                "Khóa học đã được phê duyệt",
+                "Chúc mừng! Khóa học '" + course.getTitle() + "' của bạn đã được phê duyệt và công khai trên hệ thống.",
+                sem4.edustreambe.enums.NotificationType.COURSE_STATUS,
+                "/tutor/dashboard/manage/" + courseId
+            );
         } else {
             course.setStatus(CourseStatus.REJECTED);
+            notificationService.sendNotification(
+                course.getTutorProfile().getUser(),
+                "Khóa học bị từ chối",
+                "Rất tiếc, khóa học '" + course.getTitle() + "' của bạn đã bị từ chối phê duyệt. Vui lòng kiểm tra lại nội dung.",
+                sem4.edustreambe.enums.NotificationType.COURSE_STATUS,
+                "/tutor/dashboard/manage/" + courseId
+            );
         }
 
         return courseMapper.toCourseResponse(courseRepository.save(course));
