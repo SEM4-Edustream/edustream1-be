@@ -189,13 +189,14 @@ public class PaymentService {
         // Phase 2: Enrollment in its own REQUIRES_NEW transaction
         // This runs AFTER Phase 1 transaction has committed to DB
         if (paidBookingId != null) {
+            final String finalBookingId = paidBookingId;
             try {
-                Booking freshBooking = bookingRepository.findById(paidBookingId)
-                        .orElseThrow(() -> new RuntimeException("Booking not found after payment: " + paidBookingId));
+                Booking freshBooking = bookingRepository.findById(finalBookingId)
+                        .orElseThrow(() -> new RuntimeException("Booking not found after payment: " + finalBookingId));
                 enrollmentService.enrollAfterPayment(freshBooking);
             } catch (Exception e) {
                 log.error("enrollAfterPayment failed for booking {}. PAID status is already saved. Error: {}",
-                        paidBookingId, e.getMessage(), e);
+                        finalBookingId, e.getMessage(), e);
             }
         }
 
