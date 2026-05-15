@@ -22,6 +22,17 @@ public class TutorAnalyticsResponse {
     List<CourseStat> topCourses;
     List<ActivityLog> recentActivities;
     List<CourseRevenue> revenueByCourse;
+    List<ChartData> chartData;
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ChartData {
+        int month;
+        int year;
+        BigDecimal revenue;
+    }
 
     @Data
     @Builder

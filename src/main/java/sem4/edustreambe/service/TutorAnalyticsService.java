@@ -138,6 +138,17 @@ public class TutorAnalyticsService {
                 .sorted(Comparator.comparing(TutorAnalyticsResponse.CourseRevenue::getTotalRevenue).reversed())
                 .toList();
 
+        // 6. Chart Data (Last 12 months)
+        LocalDateTime twelveMonthsAgo = now.minusMonths(11).with(TemporalAdjusters.firstDayOfMonth()).with(LocalTime.MIN);
+        List<Object[]> monthlyRevenueData = bookingItemRepository.getMonthlyRevenue(tutorId, twelveMonthsAgo);
+        List<TutorAnalyticsResponse.ChartData> chartData = monthlyRevenueData.stream()
+                .map(row -> TutorAnalyticsResponse.ChartData.builder()
+                        .year((int) row[0])
+                        .month((int) row[1])
+                        .revenue((BigDecimal) row[2])
+                        .build())
+                .toList();
+
         return TutorAnalyticsResponse.builder()
                 .totalStudents(totalStudents)
                 .revenueThisMonth(revenueThisMonth)
@@ -149,6 +160,7 @@ public class TutorAnalyticsService {
                 .topCourses(topCourses)
                 .recentActivities(recentActivities)
                 .revenueByCourse(revenueByCourse)
+                .chartData(chartData)
                 .build();
     }
 
