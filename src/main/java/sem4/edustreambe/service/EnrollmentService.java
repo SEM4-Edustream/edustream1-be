@@ -87,7 +87,7 @@ public class EnrollmentService {
                                     booking.getUser(),
                                     "Welcome to " + course.getTitle(),
                                     course.getWelcomeMessage(),
-                                    sem4.edustreambe.enums.NotificationType.COURSE_UPDATE,
+                                    sem4.edustreambe.enums.NotificationType.ENROLLMENT,
                                     "/learning/" + course.getId()
                             );
                         }
