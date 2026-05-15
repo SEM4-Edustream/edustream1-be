@@ -37,6 +37,7 @@ public enum ErrorCode {
     MODULE_NOT_FOUND(4002, "module.not_found", HttpStatus.NOT_FOUND),
     LESSON_NOT_FOUND(4003, "lesson.not_found", HttpStatus.NOT_FOUND),
     INVALID_COURSE_STATUS(4004, "invalid.course.status", HttpStatus.BAD_REQUEST),
+    COURSE_REVIEW_NOT_ALLOWED(4006, "course.review.not_allowed", HttpStatus.BAD_REQUEST),
     COURSE_OWNERSHIP_DENIED(4005, "course.ownership_denied", HttpStatus.FORBIDDEN),
 
     // BOOKING & ENROLLMENT (50xx)

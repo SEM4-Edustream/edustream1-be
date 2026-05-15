@@ -387,7 +387,7 @@ public class CourseService {
 
         if (course.getStatus() != CourseStatus.PENDING) {
             log.warn("Admin review rejected because course is not PENDING: courseId={}, currentStatus={}", courseId, course.getStatus());
-            throw new AppException(ErrorCode.INVALID_COURSE_STATUS);
+            throw new AppException(ErrorCode.COURSE_REVIEW_NOT_ALLOWED);
         }
 
         CourseStatus newStatus = isApprove ? CourseStatus.PUBLISHED : CourseStatus.REJECTED;
