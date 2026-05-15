@@ -396,23 +396,27 @@ public class CourseService {
     }
 
     private void sendCourseStatusNotification(Course course, boolean isApprove) {
-        try {
-            if (course.getTutorProfile() != null && course.getTutorProfile().getUser() != null) {
-                String title = isApprove ? "Khóa học đã được phê duyệt" : "Khóa học bị từ chối";
-                String message = isApprove
-                        ? "Chúc mừng! Khóa học '" + course.getTitle() + "' của bạn đã được phê duyệt và công khai trên hệ thống."
-                        : "Rất tiếc, khóa học '" + course.getTitle() + "' của bạn đã bị từ chối phê duyệt. Vui lòng kiểm tra lại nội dung.";
+        if (course.getTutorProfile() == null || course.getTutorProfile().getUser() == null) {
+            log.warn("Skip course status notification because tutor/user is missing for course {}", course.getId());
+            return;
+        }
 
-                notificationService.sendNotification(
-                        course.getTutorProfile().getUser(),
-                        title,
-                        message,
-                        sem4.edustreambe.enums.NotificationType.COURSE_STATUS,
-                        "/tutor/dashboard/manage/" + course.getId()
-                );
-            }
+        String title = isApprove ? "Khóa học đã được phê duyệt" : "Khóa học bị từ chối";
+        String message = isApprove
+                ? "Chúc mừng! Khóa học '" + course.getTitle() + "' của bạn đã được phê duyệt và công khai trên hệ thống."
+                : "Rất tiếc, khóa học '" + course.getTitle() + "' của bạn đã bị từ chối phê duyệt. Vui lòng kiểm tra lại nội dung.";
+
+        try {
+            notificationService.sendNotification(
+                    course.getTutorProfile().getUser(),
+                    title,
+                    message,
+                    sem4.edustreambe.enums.NotificationType.COURSE_STATUS,
+                    "/tutor/dashboard/manage/" + course.getId()
+            );
+            log.info("Course status notification queued for course {} and tutor {}", course.getId(), course.getTutorProfile().getUser().getUsername());
         } catch (Exception e) {
-            log.error("Failed to send course review notification for course {}: {}", course.getId(), e.getMessage());
+            log.error("Failed to send course review notification for course {}: {}", course.getId(), e.getMessage(), e);
         }
     }
 

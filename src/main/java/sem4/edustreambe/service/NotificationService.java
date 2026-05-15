@@ -37,7 +37,6 @@ public class NotificationService {
     @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
     public void sendNotification(User user, String title, String message, NotificationType type, String referenceUrl) {
         try {
-            // Re-fetch user to ensure it's attached to the current transaction/session
             User attachedUser = userRepository.findById(user.getId())
                     .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
@@ -49,17 +48,16 @@ public class NotificationService {
                     .referenceUrl(referenceUrl)
                     .isRead(false)
                     .build();
-            notificationRepository.save(notification);
+            Notification savedNotification = notificationRepository.save(notification);
 
-            // Đẩy thông báo thời gian thực qua WebSocket
             sem4.edustreambe.dto.notification.NotificationResponse response = sem4.edustreambe.dto.notification.NotificationResponse.builder()
-                    .id(notification.getId())
-                    .title(notification.getTitle())
-                    .message(notification.getMessage())
-                    .type(notification.getType())
-                    .referenceUrl(notification.getReferenceUrl())
-                    .isRead(notification.getIsRead())
-                    .createdAt(notification.getCreatedAt())
+                    .id(savedNotification.getId())
+                    .title(savedNotification.getTitle())
+                    .message(savedNotification.getMessage())
+                    .type(savedNotification.getType())
+                    .referenceUrl(savedNotification.getReferenceUrl())
+                    .isRead(savedNotification.getIsRead())
+                    .createdAt(savedNotification.getCreatedAt())
                     .build();
 
             messagingTemplate.convertAndSendToUser(
@@ -67,10 +65,9 @@ public class NotificationService {
                 "/queue/notifications",
                 response
             );
-            
-            org.slf4j.LoggerFactory.getLogger(getClass()).info("Notification sent to user {}: {}", attachedUser.getUsername(), title);
+
+            org.slf4j.LoggerFactory.getLogger(getClass()).info("Notification saved and sent to user {}: {}", attachedUser.getUsername(), title);
         } catch (Exception e) {
-            // Log but never throw — notification failure must NOT affect the caller's transaction
             org.slf4j.LoggerFactory.getLogger(getClass()).error("sendNotification failed for user {}: {}", 
                 user.getUsername(), e.getMessage(), e);
         }
