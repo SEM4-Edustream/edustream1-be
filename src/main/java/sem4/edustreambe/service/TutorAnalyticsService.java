@@ -212,4 +212,32 @@ public class TutorAnalyticsService {
                 .pageNumber(enrollmentPage.getNumber())
                 .build();
     }
+
+    public PageResponse<TutorReviewResponse> getTutorReviews(Pageable pageable) {
+        String tutorId = securityUtils.getCurrentTutorProfileId();
+        Page<CourseReview> reviewPage = courseReviewRepository.findByCourseTutorProfileId(tutorId, pageable);
+
+        List<TutorReviewResponse> reviews = reviewPage.getContent().stream()
+                .map(review -> TutorReviewResponse.builder()
+                        .id(review.getId())
+                        .courseId(review.getCourse().getId())
+                        .courseTitle(review.getCourse().getTitle())
+                        .studentName(review.getUser().getFirstName() + " " + review.getUser().getLastName())
+                        .studentAvatar(review.getUser().getAvatarUrl())
+                        .rating(review.getRating())
+                        .comment(review.getComment())
+                        .createdAt(review.getCreatedAt())
+                        .build())
+                .toList();
+
+        return PageResponse.<TutorReviewResponse>builder()
+                .data(reviews)
+                .meta(PageMeta.builder()
+                        .totalElements(reviewPage.getTotalElements())
+                        .totalPages(reviewPage.getTotalPages())
+                        .size(reviewPage.getSize())
+                        .number(reviewPage.getNumber())
+                        .build())
+                .build();
+    }
 }

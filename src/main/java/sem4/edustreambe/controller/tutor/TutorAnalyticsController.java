@@ -9,8 +9,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import sem4.edustreambe.dto.common.ApiResponse;
 import sem4.edustreambe.dto.tutor.response.TutorAnalyticsResponse;
+import sem4.edustreambe.dto.tutor.response.TutorReviewResponse;
 import sem4.edustreambe.dto.tutor.response.TutorStudentResponse;
 import sem4.edustreambe.service.TutorAnalyticsService;
+import sem4.edustreambe.dto.common.PageResponse;
 
 @RestController
 @RequestMapping("/api/tutor/analytics")
@@ -39,6 +41,19 @@ public class TutorAnalyticsController {
                 
         return ApiResponse.<sem4.edustreambe.dto.common.PageMeta<TutorStudentResponse>>builder()
                 .result(tutorAnalyticsService.getTutorStudents(courseId, pageable))
+                .build();
+    }
+
+    @GetMapping("/reviews")
+    public ApiResponse<PageResponse<TutorReviewResponse>> getTutorReviews(
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "0") int page,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "10") int size) {
+        
+        org.springframework.data.domain.Pageable pageable = 
+                org.springframework.data.domain.PageRequest.of(page, size, org.springframework.data.domain.Sort.by("createdAt").descending());
+                
+        return ApiResponse.<PageResponse<TutorReviewResponse>>builder()
+                .result(tutorAnalyticsService.getTutorReviews(pageable))
                 .build();
     }
 }

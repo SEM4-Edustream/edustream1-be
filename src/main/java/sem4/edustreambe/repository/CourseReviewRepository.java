@@ -20,4 +20,6 @@ public interface CourseReviewRepository extends JpaRepository<CourseReview, Stri
     Double getAverageRatingByTutor(@org.springframework.data.repository.query.Param("tutorProfileId") String tutorProfileId);
 
     java.util.List<CourseReview> findTop5ByCourseTutorProfileIdOrderByCreatedAtDesc(String tutorId);
+
+    Page<CourseReview> findByCourseTutorProfileId(String tutorId, Pageable pageable);
 }
