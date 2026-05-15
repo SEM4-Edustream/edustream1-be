@@ -23,6 +23,7 @@ public class TutorAnalyticsResponse {
     List<ActivityLog> recentActivities;
     List<CourseRevenue> revenueByCourse;
     List<ChartData> chartData;
+    List<DailyChartData> dailyChartData;
 
     @Data
     @Builder
@@ -31,6 +32,15 @@ public class TutorAnalyticsResponse {
     public static class ChartData {
         int month;
         int year;
+        BigDecimal revenue;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class DailyChartData {
+        java.time.LocalDate date;
         BigDecimal revenue;
     }
 

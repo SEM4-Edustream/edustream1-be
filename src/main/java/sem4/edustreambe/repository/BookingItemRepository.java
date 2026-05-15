@@ -31,4 +31,12 @@ public interface BookingItemRepository extends JpaRepository<BookingItem, String
             "ORDER BY EXTRACT(YEAR FROM bi.booking.createdAt) ASC, EXTRACT(MONTH FROM bi.booking.createdAt) ASC")
     java.util.List<Object[]> getMonthlyRevenue(@org.springframework.data.repository.query.Param("tutorProfileId") String tutorProfileId, 
                                                @org.springframework.data.repository.query.Param("startDate") java.time.LocalDateTime startDate);
+
+    @org.springframework.data.jpa.repository.Query("SELECT FUNCTION('DATE', bi.booking.createdAt), SUM(bi.price) " +
+            "FROM BookingItem bi WHERE bi.course.tutorProfile.id = :tutorProfileId AND bi.booking.status = 'PAID' " +
+            "AND bi.booking.createdAt >= :startDate " +
+            "GROUP BY FUNCTION('DATE', bi.booking.createdAt) " +
+            "ORDER BY FUNCTION('DATE', bi.booking.createdAt) ASC")
+    java.util.List<Object[]> getDailyRevenue(@org.springframework.data.repository.query.Param("tutorProfileId") String tutorProfileId, 
+                                             @org.springframework.data.repository.query.Param("startDate") java.time.LocalDateTime startDate);
 }

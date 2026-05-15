@@ -149,6 +149,16 @@ public class TutorAnalyticsService {
                         .build())
                 .toList();
 
+        // 7. Daily Chart Data (Last 30 days)
+        LocalDateTime thirtyDaysAgo = now.minusDays(29).with(LocalTime.MIN);
+        List<Object[]> dailyRevenueData = bookingItemRepository.getDailyRevenue(tutorId, thirtyDaysAgo);
+        List<TutorAnalyticsResponse.DailyChartData> dailyChartData = dailyRevenueData.stream()
+                .map(row -> TutorAnalyticsResponse.DailyChartData.builder()
+                        .date(((java.sql.Date) row[0]).toLocalDate())
+                        .revenue((BigDecimal) row[1])
+                        .build())
+                .toList();
+
         return TutorAnalyticsResponse.builder()
                 .totalStudents(totalStudents)
                 .revenueThisMonth(revenueThisMonth)
@@ -161,6 +171,7 @@ public class TutorAnalyticsService {
                 .recentActivities(recentActivities)
                 .revenueByCourse(revenueByCourse)
                 .chartData(chartData)
+                .dailyChartData(dailyChartData)
                 .build();
     }
 
