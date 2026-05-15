@@ -451,7 +451,7 @@ public class CourseService {
         boolean hasCategory = categorySlug != null && !categorySlug.trim().isEmpty();
 
         if (hasKeyword && hasCategory) {
-            return courseRepository.findByStatusAndCategorySlugAndTitleContainingIgnoreCase(
+            return courseRepository.findByStatusAndCategoryOrParentCategoryAndTitleContainingIgnoreCase(
                     CourseStatus.PUBLISHED, categorySlug.trim(), keyword.trim(), pageable)
                     .map(courseMapper::toCourseResponse);
         } else if (hasKeyword) {
@@ -459,7 +459,7 @@ public class CourseService {
                     CourseStatus.PUBLISHED, keyword.trim(), pageable)
                     .map(courseMapper::toCourseResponse);
         } else if (hasCategory) {
-            return courseRepository.findByStatusAndCategorySlug(
+            return courseRepository.findByStatusAndCategoryOrParentCategory(
                     CourseStatus.PUBLISHED, categorySlug.trim(), pageable)
                     .map(courseMapper::toCourseResponse);
         }
