@@ -375,24 +375,38 @@ public class CourseService {
     }
 
     public CourseResponse reviewCourse(String courseId, boolean isApprove) {
+        log.info("Admin review course requested: courseId={}, isApprove={}", courseId, isApprove);
+
         Course course = courseRepository.findById(courseId)
-                .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
+                .orElseThrow(() -> {
+                    log.warn("Admin review failed: course not found, courseId={}", courseId);
+                    return new AppException(ErrorCode.COURSE_NOT_FOUND);
+                });
+
+        log.info("Admin review course current status: courseId={}, status={}", courseId, course.getStatus());
 
         if (course.getStatus() != CourseStatus.PENDING) {
+            log.warn("Admin review rejected because course is not PENDING: courseId={}, currentStatus={}", courseId, course.getStatus());
             throw new AppException(ErrorCode.INVALID_COURSE_STATUS);
         }
 
-        if (isApprove) {
-            course.setStatus(CourseStatus.PUBLISHED);
-        } else {
-            course.setStatus(CourseStatus.REJECTED);
-        }
+        CourseStatus newStatus = isApprove ? CourseStatus.PUBLISHED : CourseStatus.REJECTED;
+        course.setStatus(newStatus);
+        log.info("Admin review course updating status: courseId={}, newStatus={}", courseId, newStatus);
 
         Course savedCourse = courseRepository.save(course);
+        log.info("Admin review course saved successfully: courseId={}, savedStatus={}", savedCourse.getId(), savedCourse.getStatus());
 
         sendCourseStatusNotification(savedCourse, isApprove);
 
-        return courseMapper.toCourseResponse(savedCourse);
+        try {
+            CourseResponse response = courseMapper.toCourseResponse(savedCourse);
+            log.info("Admin review course response mapped successfully: courseId={}", savedCourse.getId());
+            return response;
+        } catch (Exception e) {
+            log.error("Failed to map reviewed course response: courseId={}, error={}", savedCourse.getId(), e.getMessage(), e);
+            throw e;
+        }
     }
 
     private void sendCourseStatusNotification(Course course, boolean isApprove) {
