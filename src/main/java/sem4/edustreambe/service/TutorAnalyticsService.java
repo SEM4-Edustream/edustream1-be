@@ -153,10 +153,18 @@ public class TutorAnalyticsService {
         LocalDateTime thirtyDaysAgo = now.minusDays(29).with(LocalTime.MIN);
         List<Object[]> dailyRevenueData = bookingItemRepository.getDailyRevenue(tutorId, thirtyDaysAgo);
         List<TutorAnalyticsResponse.DailyChartData> dailyChartData = dailyRevenueData.stream()
-                .map(row -> TutorAnalyticsResponse.DailyChartData.builder()
-                        .date(((java.sql.Date) row[0]).toLocalDate())
+                .map(row -> {
+                    java.time.LocalDate date;
+                    if (row[0] instanceof java.sql.Date) {
+                        date = ((java.sql.Date) row[0]).toLocalDate();
+                    } else {
+                        date = (java.time.LocalDate) row[0];
+                    }
+                    return TutorAnalyticsResponse.DailyChartData.builder()
+                        .date(date)
                         .revenue((BigDecimal) row[1])
-                        .build())
+                        .build();
+                })
                 .toList();
 
         return TutorAnalyticsResponse.builder()
