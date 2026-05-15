@@ -19,4 +19,5 @@ public class UserResponse {
     LocalDate dob;
     String status;
     String roleName;
+    java.time.LocalDateTime createdAt;
 }

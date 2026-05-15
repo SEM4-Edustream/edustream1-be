@@ -21,6 +21,9 @@ import sem4.edustreambe.mapper.UserMapper;
 import sem4.edustreambe.repository.RoleRepository;
 import sem4.edustreambe.repository.UserRepository;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -159,5 +162,11 @@ public class UserService {
 
         user.setAvatarUrl(request.getAvatarUrl());
         return userMapper.toUserResponse(userRepository.save(user));
+    }
+
+    public List<UserResponse> getUsersByRole(String roleName) {
+        return userRepository.findAllByRoleName(roleName).stream()
+                .map(userMapper::toUserResponse)
+                .collect(Collectors.toList());
     }
 }
