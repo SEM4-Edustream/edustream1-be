@@ -63,22 +63,28 @@ public class ProgressService {
             enrollment.setProgressPercentage(100);
         } else {
             long completedLessons = lessonProgressRepository.countByUserAndLesson_Module_CourseAndIsCompletedTrue(student, course);
-            int newPercentage = (int) ((completedLessons * 100) / totalLessons);
-            
-            // Nếu vừa hoàn thành khóa học (từ dưới 100% lên 100%)
+            int newPercentage = (int) Math.min((completedLessons * 100) / totalLessons, 100);
+
+            // Gửi thông báo khi vừa hoàn thành khóa học (từ dưới 100% lên 100%)
             if (enrollment.getProgressPercentage() < 100 && newPercentage >= 100) {
-                if (course.getCongratulationsMessage() != null && !course.getCongratulationsMessage().isBlank()) {
-                    notificationService.sendNotification(
-                            student,
-                            "Course Completed: " + course.getTitle(),
-                            course.getCongratulationsMessage(),
-                            sem4.edustreambe.enums.NotificationType.COURSE_UPDATE,
-                            "/course/" + course.getId() + "/learn"
-                    );
+                try {
+                    if (course.getCongratulationsMessage() != null && !course.getCongratulationsMessage().isBlank()) {
+                        notificationService.sendNotification(
+                                student,
+                                "Course Completed: " + course.getTitle(),
+                                course.getCongratulationsMessage(),
+                                sem4.edustreambe.enums.NotificationType.COURSE_UPDATE,
+                                "/course/" + course.getId() + "/learn"
+                        );
+                    }
+                } catch (Exception e) {
+                    // Notification failure must NOT rollback the progress update
+                    java.util.logging.Logger.getLogger(getClass().getName())
+                        .warning("Failed to send course completion notification: " + e.getMessage());
                 }
             }
-            
-            enrollment.setProgressPercentage(Math.min(newPercentage, 100));
+
+            enrollment.setProgressPercentage(newPercentage);
         }
         enrollmentRepository.save(enrollment);
     }

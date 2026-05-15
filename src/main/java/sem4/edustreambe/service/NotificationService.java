@@ -34,36 +34,40 @@ public class NotificationService {
     }
 
     // Gửi thông báo cho 1 người dùng
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
     public void sendNotification(User user, String title, String message, NotificationType type, String referenceUrl) {
-        Notification notification = Notification.builder()
-                .user(user)
-                .title(title)
-                .message(message)
-                .type(type)
-                .referenceUrl(referenceUrl)
-                .isRead(false)
-                .build();
-        notificationRepository.save(notification);
-        
-        // Đẩy thông báo thời gian thực qua WebSocket
-        // Chuyển sang DTO để tránh lỗi serialize entity (Lazy Loading/Circular reference)
-        sem4.edustreambe.dto.notification.NotificationResponse response = sem4.edustreambe.dto.notification.NotificationResponse.builder()
-                .id(notification.getId())
-                .title(notification.getTitle())
-                .message(notification.getMessage())
-                .type(notification.getType())
-                .referenceUrl(notification.getReferenceUrl())
-                .isRead(notification.getIsRead())
-                .createdAt(notification.getCreatedAt())
-                .build();
+        try {
+            Notification notification = Notification.builder()
+                    .user(user)
+                    .title(title)
+                    .message(message)
+                    .type(type)
+                    .referenceUrl(referenceUrl)
+                    .isRead(false)
+                    .build();
+            notificationRepository.save(notification);
 
-        messagingTemplate.convertAndSendToUser(
-            user.getUsername(), 
-            "/queue/notifications", 
-            response
-        );
-        
-        // TODO: Gửi email ở đây nếu cần (Async)
+            // Đẩy thông báo thời gian thực qua WebSocket
+            sem4.edustreambe.dto.notification.NotificationResponse response = sem4.edustreambe.dto.notification.NotificationResponse.builder()
+                    .id(notification.getId())
+                    .title(notification.getTitle())
+                    .message(notification.getMessage())
+                    .type(notification.getType())
+                    .referenceUrl(notification.getReferenceUrl())
+                    .isRead(notification.getIsRead())
+                    .createdAt(notification.getCreatedAt())
+                    .build();
+
+            messagingTemplate.convertAndSendToUser(
+                user.getUsername(),
+                "/queue/notifications",
+                response
+            );
+        } catch (Exception e) {
+            // Log but never throw — notification failure must NOT affect the caller's transaction
+            org.slf4j.LoggerFactory.getLogger(getClass()).error("sendNotification failed for user {}: {}", 
+                user.getUsername(), e.getMessage(), e);
+        }
     }
 
     public Page<sem4.edustreambe.dto.notification.NotificationResponse> getMyNotifications(Pageable pageable) {
