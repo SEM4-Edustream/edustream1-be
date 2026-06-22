@@ -45,6 +45,7 @@ public class AdminTutorController {
 
     @PostMapping("/{id}/verify")
     @PreAuthorize("hasRole('ADMIN')")
+    @sem4.edustreambe.annotation.LogAdminAction(action = "REVIEW", entityType = "TUTOR_PROFILE")
     public ApiResponse<TutorProfileResponse> reviewProfile(
             @PathVariable String id,
             @Valid @RequestBody VerificationReviewRequest request) {

@@ -39,4 +39,6 @@ public interface CourseRepository extends JpaRepository<Course, String> {
 
     // Dành cho Admin: Hiện tất cả trừ DRAFT
     org.springframework.data.domain.Page<Course> findByStatusNot(CourseStatus status, org.springframework.data.domain.Pageable pageable);
+
+    long countByStatus(CourseStatus status);
 }

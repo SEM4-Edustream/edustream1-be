@@ -22,4 +22,12 @@ public interface PaymentTransactionRepository extends JpaRepository<PaymentTrans
     List<PaymentTransaction> findAllByBookingId(String bookingId);
 
     List<PaymentTransaction> findAllByBookingIdAndStatus(String bookingId, TransactionStatus status);
+
+    @org.springframework.data.jpa.repository.Query("SELECT SUM(t.amount) FROM PaymentTransaction t WHERE t.status = 'PAID'")
+    java.math.BigDecimal calculateTotalRevenue();
+
+    @org.springframework.data.jpa.repository.Query("SELECT new sem4.edustreambe.dto.admin.response.AdminRevenueChartResponse(CAST(t.createdAt AS date), SUM(t.amount)) " +
+            "FROM PaymentTransaction t WHERE t.status = 'PAID' AND t.createdAt >= :startDate " +
+            "GROUP BY CAST(t.createdAt AS date) ORDER BY CAST(t.createdAt AS date)")
+    List<sem4.edustreambe.dto.admin.response.AdminRevenueChartResponse> getRevenueByDateRange(@org.springframework.data.repository.query.Param("startDate") java.time.LocalDateTime startDate);
 }

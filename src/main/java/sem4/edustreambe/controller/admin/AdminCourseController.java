@@ -63,6 +63,7 @@ public class AdminCourseController {
     }
 
     @PostMapping("/{id}/verify")
+    @sem4.edustreambe.annotation.LogAdminAction(action = "REVIEW", entityType = "COURSE")
     public ApiResponse<CourseResponse> verifyCourse(
             @PathVariable String id,
             @RequestParam boolean isApprove) {
