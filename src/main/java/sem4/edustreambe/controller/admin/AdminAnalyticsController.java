@@ -35,4 +35,22 @@ public class AdminAnalyticsController {
                 .result(adminAnalyticsService.getRevenueChart(days))
                 .build();
     }
+
+    @GetMapping("/enrollments")
+    public ApiResponse<sem4.edustreambe.dto.common.PageMeta<sem4.edustreambe.dto.admin.response.AdminEnrollmentDetailResponse>> getEnrollments(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ApiResponse.<sem4.edustreambe.dto.common.PageMeta<sem4.edustreambe.dto.admin.response.AdminEnrollmentDetailResponse>>builder()
+                .result(adminAnalyticsService.getEnrollmentDetails(page, size))
+                .build();
+    }
+
+    @GetMapping("/course-metrics")
+    public ApiResponse<sem4.edustreambe.dto.common.PageMeta<sem4.edustreambe.dto.admin.response.AdminCourseMetricResponse>> getCourseMetrics(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ApiResponse.<sem4.edustreambe.dto.common.PageMeta<sem4.edustreambe.dto.admin.response.AdminCourseMetricResponse>>builder()
+                .result(adminAnalyticsService.getCourseMetrics(page, size))
+                .build();
+    }
 }

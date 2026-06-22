@@ -29,4 +29,21 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, String> 
             org.springframework.data.domain.Pageable pageable);
 
     java.util.List<Enrollment> findTop5ByCourseTutorProfileIdOrderByEnrolledAtDesc(String tutorId);
+
+    @org.springframework.data.jpa.repository.Query(value = "SELECT e FROM Enrollment e " +
+            "JOIN FETCH e.user " +
+            "JOIN FETCH e.course c " +
+            "JOIN FETCH c.tutorProfile tp " +
+            "JOIN FETCH tp.user",
+            countQuery = "SELECT COUNT(e) FROM Enrollment e")
+    org.springframework.data.domain.Page<Enrollment> findAllEnrollmentDetails(org.springframework.data.domain.Pageable pageable);
+
+    @org.springframework.data.jpa.repository.Query(value = "SELECT new sem4.edustreambe.dto.admin.response.AdminCourseMetricResponse(" +
+            "c.title, u.username, COUNT(e.id), AVG(e.progressPercentage)) " +
+            "FROM Enrollment e " +
+            "JOIN e.course c " +
+            "JOIN c.tutorProfile tp " +
+            "JOIN tp.user u " +
+            "GROUP BY c.id, c.title, u.username")
+    org.springframework.data.domain.Page<sem4.edustreambe.dto.admin.response.AdminCourseMetricResponse> getCourseMetrics(org.springframework.data.domain.Pageable pageable);
 }
