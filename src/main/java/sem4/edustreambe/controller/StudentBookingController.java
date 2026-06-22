@@ -37,9 +37,11 @@ public class StudentBookingController {
     }
 
     @GetMapping("/my-bookings")
-    public ApiResponse<List<BookingResponse>> getMyBookings() {
-        return ApiResponse.<List<BookingResponse>>builder()
-                .result(bookingService.getMyBookings())
+    public ApiResponse<sem4.edustreambe.dto.common.PageMeta<BookingResponse>> getMyBookings(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ApiResponse.<sem4.edustreambe.dto.common.PageMeta<BookingResponse>>builder()
+                .result(bookingService.getMyBookings(page, size))
                 .build();
     }
 

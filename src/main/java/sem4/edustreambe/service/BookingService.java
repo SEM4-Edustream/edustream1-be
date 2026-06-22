@@ -191,11 +191,22 @@ public class BookingService {
         return toBookingResponse(saved);
     }
 
-    public List<BookingResponse> getMyBookings() {
+    public sem4.edustreambe.dto.common.PageMeta<BookingResponse> getMyBookings(int page, int size) {
         User student = getCurrentUser();
-        return bookingRepository.findByUserId(student.getId()).stream()
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        org.springframework.data.domain.Page<Booking> bookingPage = bookingRepository.findByUserIdOrderByCreatedAtDesc(student.getId(), pageable);
+
+        List<BookingResponse> responses = bookingPage.getContent().stream()
                 .map(this::toBookingResponse)
                 .toList();
+
+        return sem4.edustreambe.dto.common.PageMeta.<BookingResponse>builder()
+                .content(responses)
+                .pageNumber(bookingPage.getNumber())
+                .pageSize(bookingPage.getSize())
+                .totalElements(bookingPage.getTotalElements())
+                .totalPages(bookingPage.getTotalPages())
+                .build();
     }
 
     public void deleteBooking(String bookingId) {
