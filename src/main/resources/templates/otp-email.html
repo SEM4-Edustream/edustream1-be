@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Mã xác thực OTP - EduStream</title>
+</head>
+<body style="font-family: Arial, sans-serif; color: #333; text-align: center; background-color: #f9f9f9;">
+    <div style="max-width: 600px; margin: 40px auto; padding: 32px; background-color: #ffffff; border: 1px solid #e0e0e0; border-radius: 12px;">
+
+        <!-- Logo / Header -->
+        <h2 style="color: #5624d0; margin-bottom: 4px;">EduStream</h2>
+        <p style="color: #888; font-size: 13px; margin-top: 0;">Nền tảng học tập trực tuyến</p>
+
+        <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;">
+
+        <h3 style="color: #2c3e50;">Mã xác thực đăng nhập của bạn</h3>
+
+        <p style="font-size: 15px; color: #555;">
+            Chúng tôi nhận được yêu cầu đăng nhập vào tài khoản EduStream của bạn.<br>
+            Vui lòng sử dụng mã OTP bên dưới để tiếp tục:
+        </p>
+
+        <!-- OTP Box -->
+        <div style="margin: 32px auto; display: inline-block; background-color: #f0ebff; border: 2px dashed #5624d0; border-radius: 10px; padding: 20px 48px;">
+            <span th:text="${otp}" style="font-size: 42px; font-weight: bold; letter-spacing: 12px; color: #5624d0; font-family: 'Courier New', monospace;">000000</span>
+        </div>
+
+        <p style="font-size: 14px; color: #e74c3c; font-weight: bold;">
+            ⏰ Mã này có hiệu lực trong <span th:text="${expiryMinutes}">5</span> phút.
+        </p>
+
+        <p style="font-size: 13px; color: #999;">
+            Nếu bạn không thực hiện yêu cầu này, hãy bỏ qua email này.<br>
+            Tài khoản của bạn vẫn an toàn.
+        </p>
+
+        <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;">
+
+        <p style="font-size: 12px; color: #bbb;">
+            © 2025 EduStream. Mọi quyền được bảo lưu.<br>
+            Email này được gửi tự động, vui lòng không trả lời.
+        </p>
+    </div>
+</body>
+</html>
